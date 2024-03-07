@@ -240,10 +240,14 @@ __global__ void preprocessCUDA(int P, int D, int M,
 	// spherical harmonics coefficients to RGB color.
 	if (colors_precomp == nullptr)
 	{
-		glm::vec3 result = computeColorFromSH(idx, D, M, (glm::vec3*)orig_points, *cam_pos, shs, clamped);
+		/*glm::vec3 result = computeColorFromSH(idx, D, M, (glm::vec3*)orig_points, *cam_pos, shs, clamped);
 		rgb[idx * C + 0] = result.x;
 		rgb[idx * C + 1] = result.y;
-		rgb[idx * C + 2] = result.z;
+		rgb[idx * C + 2] = result.z;*/
+
+		rgb[idx * C + 0] = p_view.z/50.0;
+		rgb[idx * C + 1] = p_view.z/50.0;
+		rgb[idx * C + 2] = p_view.z/50.0;
 	}
 
 	// Store some useful helper data for the next steps.
@@ -254,6 +258,7 @@ __global__ void preprocessCUDA(int P, int D, int M,
 	conic_opacity[idx] = { conic.x, conic.y, conic.z, opacities[idx] };
 	tiles_touched[idx] = (rect_max.y - rect_min.y) * (rect_max.x - rect_min.x);
 }
+
 
 // Main rasterization method. Collaboratively works on one tile per
 // block, each thread treats one pixel. Alternates between fetching 
@@ -270,7 +275,9 @@ renderCUDA(
 	float* __restrict__ final_T,
 	uint32_t* __restrict__ n_contrib,
 	const float* __restrict__ bg_color,
-	float* __restrict__ out_color)
+	float* __restrict__ out_color,
+	float* __restrict__ depths,
+	float* __restrict__ out_depths)
 {
 	// Identify current tile and associated min/max pixel range.
 	auto block = cg::this_thread_block();
@@ -352,8 +359,8 @@ renderCUDA(
 
 			// Eq. (3) from 3D Gaussian splatting paper.
 			for (int ch = 0; ch < CHANNELS; ch++)
-				C[ch] += features[collected_id[j] * CHANNELS + ch] * alpha * T;
-
+				//C[ch] += (features[collected_id[j] * CHANNELS + ch]) * alpha * T;
+				C[ch] += depths[collected_id[j]]/100.0 * alpha * T;
 			T = test_T;
 
 			// Keep track of last range entry to update this
@@ -370,6 +377,7 @@ renderCUDA(
 		n_contrib[pix_id] = last_contributor;
 		for (int ch = 0; ch < CHANNELS; ch++)
 			out_color[ch * H * W + pix_id] = C[ch] + T * bg_color[ch];
+		out_depths[pix_id] = C[0] + T;
 	}
 }
 
@@ -384,7 +392,9 @@ void FORWARD::render(
 	float* final_T,
 	uint32_t* n_contrib,
 	const float* bg_color,
-	float* out_color)
+	float* out_color,
+	float* depths,
+	float* out_depths)
 {
 	renderCUDA<NUM_CHANNELS> << <grid, block >> > (
 		ranges,
@@ -396,7 +406,9 @@ void FORWARD::render(
 		final_T,
 		n_contrib,
 		bg_color,
-		out_color);
+		out_color,
+		depths,
+		out_depths);
 }
 
 void FORWARD::preprocess(int P, int D, int M,

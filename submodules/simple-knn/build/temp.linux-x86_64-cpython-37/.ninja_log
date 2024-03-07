@@ -1,0 +1,4 @@
+# ninja log v5
+0	10532	1709022966707371413	/home/bertani/Prueba/submodules/simple-knn/build/temp.linux-x86_64-cpython-37/simple_knn.o	f2f20614a64f715a
+0	14835	1709022970991376040	/home/bertani/Prueba/submodules/simple-knn/build/temp.linux-x86_64-cpython-37/ext.o	24df5897e590256f
+1	38056	1709022994231401154	/home/bertani/Prueba/submodules/simple-knn/build/temp.linux-x86_64-cpython-37/spatial.o	1ca90d043edfac6f
