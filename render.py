@@ -7,6 +7,9 @@ import torchvision
 from gaussian_renderer import render
 from gaussian_renderer import GaussianModel
 
+from scene import Scene
+from os import makedirs
+import os
 
 
 #Se crea el parser
@@ -15,8 +18,18 @@ parser = ArgumentParser(description="Testing script parameters")
 model = ModelParams(parser, sentinel=True)
 #Se crea la clase pipeline y agregamos mas al parser
 pipeline = PipelineParams(parser)
+
+parser.add_argument("--iteration", default=-1, type=int)
+parser.add_argument("--skip_train", action="store_true")
+parser.add_argument("--skip_test", action="store_true")
+parser.add_argument("--quiet", action="store_true")
+
 #Los transforma a un diccionario(?) lo que lee del documento cfg_args
 args = get_combined_args(parser)
+
+args.model_path = "./Modelo"
+args.source_path = "./train"
+
 #Crea una clase solo con los argumentos de args
 pipeline = pipeline.extract(args)
 #Hace el diccionario, extiende de paramGroup
