@@ -62,3 +62,66 @@ def _ssim(img1, img2, window, window_size, channel, size_average=True):
     else:
         return ssim_map.mean(1).mean(1).mean(1)
 
+
+def TVL(img, w):
+
+    tv_h = ((img[:,:,1:,:] - img[:,:,:-1,:]).pow(2)).sum()
+    tv_w = ((img[:,:,:,1:] - img[:,:,:,:-1]).pow(2)).sum()
+
+    return w * (tv_h + tv_w).sqrt().item()
+
+
+
+def depth_distance(img):
+    window_size = 3  # Adjust as needed
+    kernel = torch.zeros(1, 1, window_size, window_size)
+
+    # Center element: Multiplied by window_size * window_size
+    kernel[0, 0, window_size // 2, window_size // 2] = window_size * window_size
+
+    # Other elements: Set to -1
+    kernel.fill_(-1)
+
+    depth_distance = F.conv2d(img.unsqueeze(1), kernel, padding=window_size // 2)
+
+    depth_distance = F.abs(depth_distance) / (window_size * window_size)
+
+    # Perform element-wise multiplication and take absolute value
+    result = torch.mean(depth_distance)
+
+    return result.item()
+
+def depth_distance_slow(img):
+
+    window_size = 3  # Adjust as needed. Impar
+    kernel = torch.zeros(1, 1, window_size, window_size)
+
+    # Center element: Multiplied by window_size * window_size
+    kernel[0, 0, window_size // 2, window_size // 2] = window_size * window_size
+
+    # Other elements: Set to -1
+    kernel.fill_(-1)
+
+
+    result = 0
+
+    radio = window_size//2
+
+    for i in range(img.size(1)):
+        for j in range(img.size(2)):
+            
+            temp_sum = 0
+
+            for w_i in range(-radio, radio + 1):
+                for w_j in range(-radio, radio + 1)
+
+                temp_sum += abs(img[0, i, j] - img[0, i + w_i, j + w_j])
+
+            temp_sum = temp_sum / (window_size * window_size)
+
+            result += temp_sum
+
+
+    return result / (img.size(1) * img.size(2))
+
+
