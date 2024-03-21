@@ -1,3 +1,6 @@
 train/
 output/
 __pycache__/
+image.png
+depths.png
+Modelo/

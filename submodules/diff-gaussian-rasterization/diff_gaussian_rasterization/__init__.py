@@ -1,4 +1,3 @@
-#
 # Copyright (C) 2023, Inria
 # GRAPHDECO research group, https://team.inria.fr/graphdeco
 # All rights reserved.
@@ -98,7 +97,7 @@ class _RasterizeGaussians(torch.autograd.Function):
         return color, depths, radii
 
     @staticmethod
-    def backward(ctx, grad_out_color, _):
+    def backward(ctx, grad_out_color, grad_out_depth, _):
 
         # Restore necessary values from context
         num_rendered = ctx.num_rendered

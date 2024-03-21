@@ -63,7 +63,7 @@ def _ssim(img1, img2, window, window_size, channel, size_average=True):
         return ssim_map.mean(1).mean(1).mean(1)
 
 
-def TVL(img, w):
+def TVL(img):
 
     channels, height, width = img.size()
    
@@ -74,7 +74,7 @@ def TVL(img, w):
     tv_h = ((img[:,1:,:] - img[:,:-1,:]).pow(2)).sum()
     tv_w = ((img[:,:,1:] - img[:,:,:-1]).pow(2)).sum()
 
-    return (w * (tv_h + tv_w).sqrt())/(height * width)
+    return (0.2 * (tv_h + tv_w).sqrt())/(height * width)
 
 
 

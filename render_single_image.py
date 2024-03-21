@@ -8,8 +8,8 @@ from gaussian_renderer import render
 from gaussian_renderer import GaussianModel
 
 from scene import Scene
-from os import makedirs
 import os
+from os import makedirs
 
 
 #Se crea el parser
@@ -24,11 +24,13 @@ parser.add_argument("--skip_train", action="store_true")
 parser.add_argument("--skip_test", action="store_true")
 parser.add_argument("--quiet", action="store_true")
 
+
 #Los transforma a un diccionario(?) lo que lee del documento cfg_args
 args = get_combined_args(parser)
 
 args.model_path = "./Modelo"
 args.source_path = "./train"
+
 
 #Crea una clase solo con los argumentos de args
 pipeline = pipeline.extract(args)
@@ -48,17 +50,13 @@ scene = Scene(dataset, gaussians, args.iteration, shuffle=False)
 views = scene.getTrainCameras()
 
 #Renderiza la imagen
-rendering = render(views[0], gaussians, pipeline, background)["render"]
-torchvision.utils.save_image(rendering, "resultado.png")
+rendering = render(views[0], gaussians, pipeline, background)
 
+picture = rendering["render"]
+depths = rendering["depths"]
 
-
-
-
-
-
-
-
+torchvision.utils.save_image(picture, "image.png")
+torchvision.utils.save_image(depths, "depths.png")
 
 
 
