@@ -240,14 +240,10 @@ __global__ void preprocessCUDA(int P, int D, int M,
 	// spherical harmonics coefficients to RGB color.
 	if (colors_precomp == nullptr)
 	{
-		/*glm::vec3 result = computeColorFromSH(idx, D, M, (glm::vec3*)orig_points, *cam_pos, shs, clamped);
+		glm::vec3 result = computeColorFromSH(idx, D, M, (glm::vec3*)orig_points, *cam_pos, shs, clamped);
 		rgb[idx * C + 0] = result.x;
 		rgb[idx * C + 1] = result.y;
-		rgb[idx * C + 2] = result.z;*/
-
-		rgb[idx * C + 0] = p_view.z/50.0;
-		rgb[idx * C + 1] = p_view.z/50.0;
-		rgb[idx * C + 2] = p_view.z/50.0;
+		rgb[idx * C + 2] = result.z;
 	}
 
 	// Store some useful helper data for the next steps.
