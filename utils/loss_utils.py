@@ -65,10 +65,16 @@ def _ssim(img1, img2, window, window_size, channel, size_average=True):
 
 def TVL(img, w):
 
-    tv_h = ((img[:,:,1:,:] - img[:,:,:-1,:]).pow(2)).sum()
-    tv_w = ((img[:,:,:,1:] - img[:,:,:,:-1]).pow(2)).sum()
+    channels, height, width = img.size()
+   
+    assert channels == 1, "Inut image must be gray scale"
 
-    return w * (tv_h + tv_w).sqrt().item()
+    
+
+    tv_h = ((img[:,1:,:] - img[:,:-1,:]).pow(2)).sum()
+    tv_w = ((img[:,:,1:] - img[:,:,:-1]).pow(2)).sum()
+
+    return (w * (tv_h + tv_w).sqrt())/(height * width)
 
 
 
@@ -113,9 +119,9 @@ def depth_distance_slow(img):
             temp_sum = 0
 
             for w_i in range(-radio, radio + 1):
-                for w_j in range(-radio, radio + 1)
+                for w_j in range(-radio, radio + 1):
 
-                temp_sum += abs(img[0, i, j] - img[0, i + w_i, j + w_j])
+	                temp_sum += abs(img[0, i, j] - img[0, i + w_i, j + w_j])
 
             temp_sum = temp_sum / (window_size * window_size)
 
