@@ -114,6 +114,13 @@ RasterizeGaussiansCUDA(
 		radii.contiguous().data<int>(),
 		debug);
   }
+
+  //Normalize depths
+  torch::Scalar min_val = out_depths.amin();
+  torch::Scalar max_val = out_depths.amax();
+  out_depths = (out_depths - min_val) / (max_val - min_val);
+
+
   return std::make_tuple(rendered, out_color, out_depths, radii, geomBuffer, binningBuffer, imgBuffer);
 }
 
