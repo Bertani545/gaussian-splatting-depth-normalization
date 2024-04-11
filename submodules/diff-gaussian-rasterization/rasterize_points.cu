@@ -116,8 +116,8 @@ RasterizeGaussiansCUDA(
   }
 
   //Normalize depths
-  torch::Scalar min_val = out_depths.amin();
-  torch::Scalar max_val = out_depths.amax();
+  torch::Tensor min_val = out_depths.min();
+  torch::Tensor max_val = out_depths.max();
   out_depths = (out_depths - min_val) / (max_val - min_val);
 
 
