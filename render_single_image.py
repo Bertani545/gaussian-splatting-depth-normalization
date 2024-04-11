@@ -11,6 +11,7 @@ from scene import Scene
 import os
 from os import makedirs
 
+from scene.cameras import MiniCam
 
 #Se crea el parser
 parser = ArgumentParser(description="Testing script parameters")
@@ -49,8 +50,12 @@ background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
 scene = Scene(dataset, gaussians, args.iteration, shuffle=False)
 views = scene.getTrainCameras()
 
+
+old = views[8]
+view = MiniCam(old.image_width, old.image_height, old.FoVy, old.FoVx, old.znear, old.zfar, old.world_view_transform, old.full_proj_transform) 
+
 #Renderiza la imagen
-rendering = render(views[0], gaussians, pipeline, background)
+rendering = render(view, gaussians, pipeline, background)
 
 picture = rendering["render"]
 depths = rendering["depths"]
