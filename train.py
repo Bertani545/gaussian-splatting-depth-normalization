@@ -28,7 +28,30 @@ try:
 except ImportError:
     TENSORBOARD_FOUND = False
 
-def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
+
+class SubsetParams():
+    def __init__(self):
+        self.indices = None
+        self.n_cameras = -1
+
+class subset_TrainCameras :
+
+    def __init__(scene : Scene, indices = None, n_cameras = -1):
+        self.AllCameras = scene.getTrainCameras().copy()
+        if(indices):
+            self.indices = indices
+        else:
+            self.indices = [randint(0, len(self.AllCameras)) for _ in range(min(len(self.AllCameras)-1, n_cameras))]
+
+        self.subset = []
+        for idx in self.indices:
+            self.subset.append(self.AllCameras[idx])
+
+    def getSubset():
+        return self.subset
+
+
+def training(dataset, opt, pipe, camera_subset, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
     first_iter = 0
     tb_writer = prepare_output_and_logger(dataset)
     gaussians = GaussianModel(dataset.sh_degree)
@@ -43,6 +66,17 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
 
     iter_start = torch.cuda.Event(enable_timing = True)
     iter_end = torch.cuda.Event(enable_timing = True)
+
+
+    # Gets a subset
+    trainCameras
+    if cam_subset.n_cameras > 0:
+        trainCameras = subset_TrainCameras(scene, n_cameras=cam_subset.n_cameras)
+    elif cam_subset.indices:
+        trainCameras = subset_TrainCameras(scene, indices=cam_subset.indices)
+
+
+
 
     viewpoint_stack = None
     ema_loss_for_log = 0.0
@@ -72,9 +106,17 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         if iteration % 1000 == 0:
             gaussians.oneupSHdegree()
 
+        '''
+        # Original
         # Pick a random Camera
         if not viewpoint_stack:
             viewpoint_stack = scene.getTrainCameras().copy()
+        viewpoint_cam = viewpoint_stack.pop(randint(0, len(viewpoint_stack)-1))
+        '''
+
+        # Pick a random Camera
+        if not viewpoint_stack:
+            viewpoint_stack = trainCameras.getSubset().copy()
         viewpoint_cam = viewpoint_stack.pop(randint(0, len(viewpoint_stack)-1))
 
         # Render
@@ -217,6 +259,12 @@ if __name__ == "__main__":
     args = parser.parse_args(sys.argv[1:])
     args.save_iterations.append(args.iterations)
     
+
+    #New arguments
+    sp = SubsetParams()
+    sp.n_cameras = 10
+
+
     print("Optimizing " + args.model_path)
 
     # Initialize system state (RNG)
@@ -225,7 +273,7 @@ if __name__ == "__main__":
     # Start GUI server, configure and run training
     network_gui.init(args.ip, args.port)
     torch.autograd.set_detect_anomaly(args.detect_anomaly)
-    training(lp.extract(args), op.extract(args), pp.extract(args), args.test_iterations, args.save_iterations, args.checkpoint_iterations, args.start_checkpoint, args.debug_from)
+    training(lp.extract(args), op.extract(args), pp.extract(args), sp, args.test_iterations, args.save_iterations, args.checkpoint_iterations, args.start_checkpoint, args.debug_from)
 
     # All done
     print("\nTraining complete.")

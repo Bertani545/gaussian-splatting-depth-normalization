@@ -15,6 +15,8 @@ from scene.cameras import MiniCam
 
 #Se crea el parser
 parser = ArgumentParser(description="Testing script parameters")
+args = parser.parse_args(sys.argv[1:])
+
 #Argumentos del modelo
 model = ModelParams(parser, sentinel=True)
 #Se crea la clase pipeline y agregamos mas al parser
@@ -24,6 +26,8 @@ parser.add_argument("--iteration", default=-1, type=int)
 parser.add_argument("--skip_train", action="store_true")
 parser.add_argument("--skip_test", action="store_true")
 parser.add_argument("--quiet", action="store_true")
+
+
 
 
 #Los transforma a un diccionario(?) lo que lee del documento cfg_args
