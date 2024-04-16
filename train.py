@@ -36,22 +36,23 @@ class SubsetParams():
 
 class subset_TrainCameras :
 
-    def __init__(scene : Scene, indices = None, n_cameras = -1):
+    def __init__(self, scene : Scene, indices = None, n_cameras = -1):
         self.AllCameras = scene.getTrainCameras().copy()
-        if(indices):
+        if indices :
             self.indices = indices
-        else:
+        elif n_cameras  > 0:
             self.indices = [randint(0, len(self.AllCameras)) for _ in range(min(len(self.AllCameras)-1, n_cameras))]
-
+        else:
+            self.indices = [_ for _ in range(len(self.AllCameras))]
         self.subset = []
         for idx in self.indices:
             self.subset.append(self.AllCameras[idx])
 
-    def getSubset():
+    def getSubset(self):
         return self.subset
 
 
-def training(dataset, opt, pipe, camera_subset, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
+def training(dataset, opt, pipe, cam_subset, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
     first_iter = 0
     tb_writer = prepare_output_and_logger(dataset)
     gaussians = GaussianModel(dataset.sh_degree)
@@ -68,13 +69,14 @@ def training(dataset, opt, pipe, camera_subset, testing_iterations, saving_itera
     iter_end = torch.cuda.Event(enable_timing = True)
 
 
-    # Gets a subset
-    trainCameras
+    # Gets a subset if possible
+    
     if cam_subset.n_cameras > 0:
         trainCameras = subset_TrainCameras(scene, n_cameras=cam_subset.n_cameras)
     elif cam_subset.indices:
         trainCameras = subset_TrainCameras(scene, indices=cam_subset.indices)
-
+    else:
+        trainCameras = subset_TrainCameras(scene)
 
 
 

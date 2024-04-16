@@ -1,3 +1,5 @@
+import os
+import sys
 from argparse import ArgumentParser
 from arguments import ModelParams, PipelineParams, get_combined_args
 
@@ -15,10 +17,9 @@ from scene.cameras import MiniCam
 
 #Se crea el parser
 parser = ArgumentParser(description="Testing script parameters")
-args = parser.parse_args(sys.argv[1:])
 
 #Argumentos del modelo
-model = ModelParams(parser, sentinel=True)
+model = ModelParams(parser)
 #Se crea la clase pipeline y agregamos mas al parser
 pipeline = PipelineParams(parser)
 
@@ -27,11 +28,12 @@ parser.add_argument("--skip_train", action="store_true")
 parser.add_argument("--skip_test", action="store_true")
 parser.add_argument("--quiet", action="store_true")
 
+args = parser.parse_args(sys.argv[1:])
 
 
 
 #Los transforma a un diccionario(?) lo que lee del documento cfg_args
-args = get_combined_args(parser)
+#args = get_combined_args(parser)
 
 args.model_path = "./Modelo"
 args.source_path = "./train"
