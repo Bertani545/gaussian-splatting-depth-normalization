@@ -57,18 +57,29 @@ scene = Scene(dataset, gaussians, args.iteration, shuffle=False)
 views = scene.getTrainCameras()
 
 
-old = views[8]
-view = MiniCam(old.image_width, old.image_height, old.FoVy, old.FoVx, old.znear, old.zfar, old.world_view_transform, old.full_proj_transform) 
+# Check for folder
+# Directory where the image will be saved
+directory = "imgs"
 
-#Renderiza la imagen
-rendering = render(view, gaussians, pipeline, background)
-
-picture = rendering["render"]
-depths = rendering["depths"]
-
-torchvision.utils.save_image(picture, "image.png")
-torchvision.utils.save_image(depths, "depths.png")
+# Check if the directory exists, and if not, create it
+if not os.path.exists(directory):
+    os.makedirs(directory)
 
 
-print("Done!")
+for idx, view in enumerate(views):
+    rendering = render(view, gaussians, pipeline, background)
+    picture = rendering["render"]
+    depths = rendering["depths"]
+
+    torchvision.utils.save_image(picture,f"imgs/image{idx}.png")
+    torchvision.utils.save_image(depths, f"imgs/depths{idx}.png")
+
+#old = views[8]
+#view = MiniCam(old.image_width, old.image_height, old.FoVy, old.FoVx, old.znear, old.zfar, old.world_view_transform, old.full_proj_transform) 
+
+print("Donde!")
+
+
+
+
 

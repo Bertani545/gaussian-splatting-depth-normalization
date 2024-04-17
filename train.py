@@ -78,7 +78,8 @@ def training(dataset, opt, pipe, cam_subset, testing_iterations, saving_iteratio
     else:
         trainCameras = subset_TrainCameras(scene)
 
-
+    print(f"Number of cameras: {len(trainCameras.subset)}")
+    print(f"Working with cameras {trainCameras.indices}")
 
     viewpoint_stack = None
     ema_loss_for_log = 0.0
@@ -119,6 +120,7 @@ def training(dataset, opt, pipe, cam_subset, testing_iterations, saving_iteratio
         # Pick a random Camera
         if not viewpoint_stack:
             viewpoint_stack = trainCameras.getSubset().copy()
+#            print(f"Still working with : {len(viewpoint_stack)} cameras")
         viewpoint_cam = viewpoint_stack.pop(randint(0, len(viewpoint_stack)-1))
 
         # Render
@@ -264,7 +266,7 @@ if __name__ == "__main__":
 
     #New arguments
     sp = SubsetParams()
-    sp.n_cameras = 10
+    sp.n_cameras = 5
 
 
     print("Optimizing " + args.model_path)
