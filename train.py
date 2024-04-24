@@ -266,8 +266,8 @@ if __name__ == "__main__":
 
     #New arguments
     sp = SubsetParams()
-    sp.n_cameras = 5
-
+    #sp.n_cameras = 15
+    sp.indices = [0, 1, 2, 3, 4, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284,  300]
 
     print("Optimizing " + args.model_path)
 
