@@ -1,9 +1,9 @@
 from random import randint, sample
-
+from scene import Scene
 
 class MyParams():
     def __init__(self, sceneIndices = None, n_cameras = -1, test = False, trainIndices = None, percentage = 1.0):
-    	self.SceneIndices = sceneIndices.sort() if sceneIndices else None
+        self.SceneIndices = sceneIndices.sort() if sceneIndices else None
         self.N_cameras = n_cameras
 
         self.MakeTest = test
@@ -12,12 +12,12 @@ class MyParams():
 
 class cameras_Subset :
 
-	def __init__(self):
-		self.SceneIndices = []
-		self.TestIndices = []
+    def __init__(self):
+        self.SceneIndices = []
+        self.TestIndices = []
         self.TrainIndices = []
 
-    def __init__(self, scene : Scene, params = None : MyParams):
+    def __init__(self, scene : Scene, params : MyParams = None):
         self.AllCameras = scene.getTrainCameras().copy()
         
         if params.SceneIndices :
@@ -42,23 +42,25 @@ class cameras_Subset :
         self.TrainIndices = []
 
         if params.MakeTest:
-        	if params.TrainIndices:
-        		for idx in params.TrainIndices:
-        			self.TrainSubset.append(self.CameraSubset[idx])
-        			self.TrainIndices.append(params.SceneIndices[idx])
+            if params.TrainIndices:
+                for idx in params.TrainIndices:
+                    self.TrainSubset.append(self.CameraSubset[idx])
+                    self.TrainIndices.append(params.SceneIndices[idx])
 
-        	else:
-        		trainSamples = int(len(self.CameraSubset) * percentage)
+            else:
+                trainSamples = int(len(self.CameraSubset) * params.Percentage)
 
-        		self.TrainSubset = random.sample(CameraSubset, trainSamples)
-        		self.TrainIndices.append(params.SceneIndices[idx])
 
-        	self.TestSubset = [_ for _ in self.CameraSubset if _ not in self.TrainSubset]
-        	self.TestIndices = [_ for _ in params.SceneIndices if _ not in self.TrainIndices]
+                self.TrainIndices = sample(params.SceneIndices, trainSamples)
+                for idx in self.TrainIndices:
+                    self.TrainSubset.append(self.AllCameras[idx])
+
+            self.TestSubset = [_ for _ in self.CameraSubset if _ not in self.TrainSubset]
+            self.TestIndices = [_ for _ in params.SceneIndices if _ not in self.TrainIndices]
 
         else:
-        	self.TrainSubset = self.CameraSubset.copy()
-        	self.TrainIndices = params.SceneIndices.copy()
+            self.TrainSubset = self.CameraSubset.copy()
+            self.TrainIndices = params.SceneIndices.copy()
 
     def getSubset(self):
         return self.CameraSubset
