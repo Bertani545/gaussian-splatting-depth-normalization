@@ -13,55 +13,56 @@ class MyParams():
 
 class cameras_Subset :
 
-    def __init__(self):
+    def __init__(self, scene : Scene = None, params : MyParams = None):
+        
+        self.AllCameras = []
         self.SceneIndices = []
         self.TestIndices = []
         self.TrainIndices = []
+        self.TestSubset = []
+        self.TrainSubset = []
 
-    def __init__(self, scene : Scene, params : MyParams = None):
-        self.AllCameras = scene.getTrainCameras().copy()
+        if scene and params:
+            self.AllCameras = scene.getTrainCameras().copy()
         
-        if params.SceneIndices :
-            self.SceneIndices = params.SceneIndices
-        elif params.N_cameras  > 0:
-            self.SceneIndices = [randint(0, len(self.AllCameras)) for _ in range(min(len(self.AllCameras)-1, params.N_cameras))]
-        else:
-            self.SceneIndices = [_ for _ in range(len(self.AllCameras))]
-        
-        self.CameraSubset = []
-        for idx in self.SceneIndices:
-            self.CameraSubset.append(self.AllCameras[idx])
 
-        print(f"Number of cameras: {len(self.CameraSubset)}")
-        print(f"Working with cameras {self.SceneIndices}")
+            if params.SceneIndices :
+                self.SceneIndices = params.SceneIndices
+            elif params.N_cameras  > 0:
+                self.SceneIndices = [randint(0, len(self.AllCameras)) for _ in range(min(len(self.AllCameras)-1, params.N_cameras))]
+            else:
+                self.SceneIndices = [_ for _ in range(len(self.AllCameras))]
+        
+            self.CameraSubset = []
+            for idx in self.SceneIndices:
+                self.CameraSubset.append(self.AllCameras[idx])
+
+            print(f"Number of cameras: {len(self.CameraSubset)}")
+            print(f"Working with cameras {self.SceneIndices}")
 
 
         #Construct the train and test sets
-        self.TestSubset = []
-        self.TrainSubset = []
-        self.TestIndices = []
-        self.TrainIndices = []
+       
+            if params.MakeTest:
+                if params.TrainIndices:
+                    for idx in params.TrainIndices:
+                        self.TrainSubset.append(self.CameraSubset[idx])
+                        self.TrainIndices.append(params.SceneIndices[idx])
 
-        if params.MakeTest:
-            if params.TrainIndices:
-                for idx in params.TrainIndices:
-                    self.TrainSubset.append(self.CameraSubset[idx])
-                    self.TrainIndices.append(params.SceneIndices[idx])
+                else:
+                    trainSamples = int(len(self.CameraSubset) * params.Percentage)
+
+
+                    self.TrainIndices = sample(params.SceneIndices, trainSamples)
+                    for idx in self.TrainIndices:
+                        self.TrainSubset.append(self.AllCameras[idx])
+
+                self.TestSubset = [_ for _ in self.CameraSubset if _ not in self.TrainSubset]
+                self.TestIndices = [_ for _ in params.SceneIndices if _ not in self.TrainIndices]
 
             else:
-                trainSamples = int(len(self.CameraSubset) * params.Percentage)
-
-
-                self.TrainIndices = sample(params.SceneIndices, trainSamples)
-                for idx in self.TrainIndices:
-                    self.TrainSubset.append(self.AllCameras[idx])
-
-            self.TestSubset = [_ for _ in self.CameraSubset if _ not in self.TrainSubset]
-            self.TestIndices = [_ for _ in params.SceneIndices if _ not in self.TrainIndices]
-
-        else:
-            self.TrainSubset = self.CameraSubset.copy()
-            self.TrainIndices = params.SceneIndices.copy()
+                self.TrainSubset = self.CameraSubset.copy()
+                self.TrainIndices = params.SceneIndices.copy()
 
     def getSubset(self):
         return self.CameraSubset
@@ -104,10 +105,12 @@ class cameras_Subset :
                     current_section = "train"
                 elif line == "Test Indices:":
                     current_section = "test"
+                elif line == "":
+                    pass
                 elif current_section == "train":
                     self.TrainIndices.append(int(line))
                 elif current_section == "test":
                     self.TestIndices.append(int(line))
 
-        loadViews()
+        self.loadViews()
 
