@@ -71,8 +71,8 @@ class cameras_Subset :
     def getTestSubset(self):
     	return self.TestSubset
 
-    def saveCameras(self):
-    	with open("usedCameras.txt", 'w') as file:
+    def saveCameras(self, outputPath):
+    	with open(outputPath + "/usedCameras.txt", 'w') as file:
             file.write("Train Indices:\n")
             for index in self.TrainIndices:
                 file.write(str(index) + '\n')
@@ -81,8 +81,8 @@ class cameras_Subset :
             for index in self.TestIndices:
                 file.write(str(index) + '\n')
 
-    def read_indices(self):
-        with open("usedCameras.txt", 'r') as file:
+    def read_indices(self, outputPath):
+        with open(outputPath + "/usedCameras.txt", 'r') as file:
             current_section = None
             for line in file:
                 line = line.strip()
