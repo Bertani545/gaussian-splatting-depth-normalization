@@ -12,6 +12,11 @@ class MyParams():
 
 class cameras_Subset :
 
+	def __init__(self):
+		self.SceneIndices = []
+		self.TestIndices = []
+        self.TrainIndices = []
+
     def __init__(self, scene : Scene, params = None : MyParams):
         self.AllCameras = scene.getTrainCameras().copy()
         
