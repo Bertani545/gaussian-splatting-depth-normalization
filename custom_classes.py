@@ -1,3 +1,4 @@
+import os
 from random import randint, sample
 from scene import Scene
 
@@ -72,7 +73,8 @@ class cameras_Subset :
     	return self.TestSubset
 
     def saveCameras(self, outputPath):
-    	with open(outputPath + "/usedCameras.txt", 'w') as file:
+    	path = os.path.join(outputPath, "usedCameras.txt")
+    	with open(path, 'w') as file:
             file.write("Train Indices:\n")
             for index in self.TrainIndices:
                 file.write(str(index) + '\n')
@@ -82,7 +84,8 @@ class cameras_Subset :
                 file.write(str(index) + '\n')
 
     def read_indices(self, outputPath):
-        with open(outputPath + "/usedCameras.txt", 'r') as file:
+        path = os.path.join(outputPath, "usedCameras.txt")
+        with open(path, 'r') as file:
             current_section = None
             for line in file:
                 line = line.strip()

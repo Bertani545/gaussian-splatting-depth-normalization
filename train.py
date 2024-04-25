@@ -52,7 +52,7 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
     # Gets a subset if possible
     workCameras = cameras_Subset(scene, subsetParams)
     #We save the training and test cameras
-    workCameras.saveCameras(os.getenv('OAR_JOB_ID')[0:10])
+    workCameras.saveCameras(dataset.model_path)
     '''
     if cam_subset.n_cameras > 0:
         trainCameras = cameras_Subset(scene, n_cameras=cam_subset.n_cameras)
