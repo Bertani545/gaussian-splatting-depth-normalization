@@ -77,7 +77,7 @@ for idx, view in enumerate(views):
 #old = views[8]
 #view = MiniCam(old.image_width, old.image_height, old.FoVy, old.FoVx, old.znear, old.zfar, old.world_view_transform, old.full_proj_transform) 
 
-print("Donde!")
+print("Done!")
 
 
 
