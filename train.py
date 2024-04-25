@@ -29,33 +29,10 @@ except ImportError:
     TENSORBOARD_FOUND = False
 
 
-class SubsetParams():
-    def __init__(self):
-        self.indices = None
-        self.n_cameras = -1
-
-class subset_TrainCameras :
-
-    def __init__(self, scene : Scene, indices = None, n_cameras = -1):
-        self.AllCameras = scene.getTrainCameras().copy()
-        if indices :
-            self.indices = indices
-        elif n_cameras  > 0:
-            self.indices = [randint(0, len(self.AllCameras)) for _ in range(min(len(self.AllCameras)-1, n_cameras))]
-        else:
-            self.indices = [_ for _ in range(len(self.AllCameras))]
-        self.subset = []
-        for idx in self.indices:
-            self.subset.append(self.AllCameras[idx])
-
-        print(f"Number of cameras: {len(self.subset)}")
-        print(f"Working with cameras {self.indices}")
-
-    def getSubset(self):
-        return self.subset
+from custom_classes import *
 
 
-def training(dataset, opt, pipe, cam_subset, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
+def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
     first_iter = 0
     tb_writer = prepare_output_and_logger(dataset)
     gaussians = GaussianModel(dataset.sh_degree)
@@ -74,13 +51,15 @@ def training(dataset, opt, pipe, cam_subset, testing_iterations, saving_iteratio
 
     # Gets a subset if possible
     
+    workCameras = cameras_Subset(scene, subsetParams)
+    '''
     if cam_subset.n_cameras > 0:
-        trainCameras = subset_TrainCameras(scene, n_cameras=cam_subset.n_cameras)
+        trainCameras = cameras_Subset(scene, n_cameras=cam_subset.n_cameras)
     elif cam_subset.indices:
-        trainCameras = subset_TrainCameras(scene, indices=cam_subset.indices)
+        trainCameras = cameras_Subset(scene, indices=cam_subset.indices)
     else:
-        trainCameras = subset_TrainCameras(scene)
-
+        trainCameras = cameras_Subset(scene)
+    '''
     
 
     viewpoint_stack = None
@@ -268,7 +247,7 @@ if __name__ == "__main__":
     
 
     #New arguments
-    sp = SubsetParams()
+    sp = MyParams()
     #sp.n_cameras = 15
     sp.indices = [0, 1, 2, 3, 4]#154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284,  300]
 
