@@ -23,7 +23,7 @@ from gaussian_renderer import GaussianModel
 
 from custom_classes import *
 
-def render_set(model_path, name, iteration, views, gaussians, pipeline, background):
+def render_set(model_path, name, iteration, views, gaussians, pipeline, background, original_indices):
     render_path = os.path.join(model_path, name, "ours_{}".format(iteration), "renders")
     gts_path = os.path.join(model_path, name, "ours_{}".format(iteration), "gt")
 
@@ -33,8 +33,8 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
     for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
         rendering = render(view, gaussians, pipeline, background)["render"]
         gt = view.original_image[0:3, :, :]
-        torchvision.utils.save_image(rendering, os.path.join(render_path, '{0:05d}'.format(idx) + ".png"))
-        torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
+        torchvision.utils.save_image(rendering, os.path.join(render_path, '{0:05d}'.format(original_indices[idx]) + ".png"))
+        torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(original_indices[idx]) + ".png"))
 
 def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParams):
     with torch.no_grad():
@@ -55,10 +55,10 @@ def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParam
 
 
         if not skip_train:
-             render_set(dataset.model_path, "train", scene.loaded_iter, usedCameras.getTrainSubset(), gaussians, pipeline, background)
+             render_set(dataset.model_path, "train", scene.loaded_iter, usedCameras.getTrainSubset(), gaussians, pipeline, background, usedCameras.TrainIndices)
 
         if not skip_test:
-             render_set(dataset.model_path, "test", scene.loaded_iter, usedCameras.getTestSubset(), gaussians, pipeline, background)
+             render_set(dataset.model_path, "test", scene.loaded_iter, usedCameras.getTestSubset(), gaussians, pipeline, background, usedCameras.TestIndices)
 
 if __name__ == "__main__":
     # Set up command line argument parser
