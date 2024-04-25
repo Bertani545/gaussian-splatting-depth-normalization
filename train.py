@@ -50,8 +50,9 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
 
 
     # Gets a subset if possible
-    
     workCameras = cameras_Subset(scene, subsetParams)
+    #We save the training and test cameras
+    workCameras.saveCameras()
     '''
     if cam_subset.n_cameras > 0:
         trainCameras = cameras_Subset(scene, n_cameras=cam_subset.n_cameras)
@@ -100,7 +101,7 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
 
         # Pick a random Camera
         if not viewpoint_stack:
-            viewpoint_stack = trainCameras.getSubset().copy()
+            viewpoint_stack = trainCameras.getTrainSubset().copy()
 #            print(f"Still working with : {len(viewpoint_stack)} cameras")
         viewpoint_cam = viewpoint_stack.pop(randint(0, len(viewpoint_stack)-1))
 
@@ -247,9 +248,11 @@ if __name__ == "__main__":
     
 
     #New arguments
-    sp = MyParams()
-    #sp.n_cameras = 15
-    sp.indices = [0, 1, 2, 3, 4]#154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284,  300]
+    myParams = MyParams()
+    myParams.SceneIndices = [0, 1, 2, 3, 4, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284,  300]
+    myParams.MakeTest = true
+    myParams.Percentage = .8
+
 
     print("Optimizing " + args.model_path)
 
@@ -259,7 +262,7 @@ if __name__ == "__main__":
     # Start GUI server, configure and run training
     network_gui.init(args.ip, args.port)
     torch.autograd.set_detect_anomaly(args.detect_anomaly)
-    training(lp.extract(args), op.extract(args), pp.extract(args), sp, args.test_iterations, args.save_iterations, args.checkpoint_iterations, args.start_checkpoint, args.debug_from)
+    training(lp.extract(args), op.extract(args), pp.extract(args), myParams, args.test_iterations, args.save_iterations, args.checkpoint_iterations, args.start_checkpoint, args.debug_from)
 
     # All done
     print("\nTraining complete.")
