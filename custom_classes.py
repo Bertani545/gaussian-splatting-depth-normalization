@@ -72,6 +72,15 @@ class cameras_Subset :
     def getTestSubset(self):
     	return self.TestSubset
 
+    def loadViews(self):
+        if len(self.TrainIndices) > 0:
+            for idx in self.TrainIndices:
+                self.TrainSubset.append(self.AllCameras[idx])
+
+        if len(self.TestIndices) > 0:
+            for idx in self.TestIndices:
+                self.TestSubset.append(self.AllCameras[idx])
+
     def saveCameras(self, outputPath):
     	path = os.path.join(outputPath, "usedCameras.txt")
     	with open(path, 'w') as file:
@@ -83,7 +92,9 @@ class cameras_Subset :
             for index in self.TestIndices:
                 file.write(str(index) + '\n')
 
-    def read_indices(self, outputPath):
+    def read_indices(self, outputPath, scene : Scene):
+        self.AllCameras = scene.getTrainCameras().copy()
+
         path = os.path.join(outputPath, "usedCameras.txt")
         with open(path, 'r') as file:
             current_section = None
@@ -94,8 +105,9 @@ class cameras_Subset :
                 elif line == "Test Indices:":
                     current_section = "test"
                 elif current_section == "train":
-                    self.train_indices.append(int(line))
+                    self.TrainIndices.append(int(line))
                 elif current_section == "test":
-                    self.test_indices.append(int(line))
+                    self.TestIndices.append(int(line))
 
+        loadViews()
 
