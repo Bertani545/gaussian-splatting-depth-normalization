@@ -30,6 +30,7 @@ except ImportError:
 
 
 from custom_classes import *
+#from scene.cameras import MiniCam
 
 
 def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
@@ -99,11 +100,17 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
         viewpoint_cam = viewpoint_stack.pop(randint(0, len(viewpoint_stack)-1))
         '''
 
-        # Pick a random Camera
-        if not viewpoint_stack:
-            viewpoint_stack = workCameras.getTrainSubset().copy()
-#            print(f"Still working with : {len(viewpoint_stack)} cameras")
-        viewpoint_cam = viewpoint_stack.pop(randint(0, len(viewpoint_stack)-1))
+        # Pick a random Camera or create a new one
+        create_new = True if randint(0, 100) < 10 else False
+
+        if create_new:
+            #Create new camera
+            rand_cam = workCameras.getTrainSubset()[randint(0, len(workCameras.getTrainSubset()) - 1)]
+            viewpoint_cam = MiniCam_FromCam(rand_cam)
+        else:
+            if not viewpoint_stack:
+                viewpoint_stack = workCameras.getTrainSubset().copy()
+            viewpoint_cam = viewpoint_stack.pop(randint(0, len(viewpoint_stack) - 1))
 
         # Render
         if (iteration - 1) == debug_from:
@@ -115,15 +122,19 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
 
         image, viewspace_point_tensor, visibility_filter, radii = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
 
-#        depths = render_pkg["depths"]
+        depths = render_pkg["depths"]
         
 
-        # Loss
-        gt_image = viewpoint_cam.original_image.cuda()
+        # Loss. Depends on camera used
+        if create_new:
+            loss = TVL(depths)
+        else:
+            gt_image = viewpoint_cam.original_image.cuda()
+            Ll1 = l1_loss(image, gt_image)
+            loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image)) + TVL(depths) #change to accept depth
 
-        Ll1 = l1_loss(image, gt_image)
+        
 
-        loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image)) #+ TVL(depths) #change to accept depth
 
         loss.backward() #starts the back propagation
 

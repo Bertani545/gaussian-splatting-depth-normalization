@@ -1,6 +1,65 @@
 import os
 from random import randint, sample
 from scene import Scene
+import numpy as np
+from utils.graphics_utils import getWorld2View2, getProjectionMatrix
+
+
+def rodrigues_Matrix(axis, angle):
+    c = np.cos(angle)
+    s = np.sin(angle)
+    oc = 1 - c
+
+    x = axis[0]
+    y = axis[1]
+    z = axis[2]
+
+    mat = np.zeros((3,3))
+
+    mat[0][0] = oc * x * x + c;
+    mat[0][1] = oc * x * y - z * s;
+    mat[0][2] = oc * z * x + y * s;
+
+    mat[1][0] = oc * x * y + z * s;
+    mat[1][1] = oc * y * y + c;
+    mat[1][2] = oc * y * z - x * s;
+
+    mat[2][0] = oc * z * x - y * s;
+    mat[2][1] = oc * y * z + x * s;
+    mat[2][2] = oc * z * z + c;
+
+    return mat
+
+
+class MiniCam_FromCam:
+    def __init__(self, cam, rot_offset=np.radians(0.1), trans_offset=np.array([0.01, 0.02, 0.03]), trans=np.array([0.0, 0.0, 0.0]), scale=1.0):
+        self.image_width = cam.image_width
+        self.image_height = cam.image_height    
+        self.FoVy = cam.FoVy
+        self.FoVx = cam.FoVx
+        self.znear = cam.znear
+        self.zfar = cam.zfar
+
+        # Apply small rotation offset
+        R_offset = np.eye(3)  # Identity matrix for no initial rotation offset
+        if rot_offset > 0:
+            # Choose an axis for rotation (e.g., x-axis)
+            axis = np.random.rand(3)
+            axis = axis / np.linalg.norm(axis)
+            R_offset = rodrigues_Matrix(axis, rot_offset)
+
+            # Apply small translation offset
+            T_offset = trans_offset
+
+        # Combine original and offset values
+        R = cam.R @ R_offset
+        T = cam.T + T_offset
+
+        self.world_view_transform = torch.tensor(getWorld2View2(R, T, trans, scale)).transpose(0, 1).cuda()
+        self.projection_matrix = getProjectionMatrix(znear=self.znear, zfar=self.zfar, fovX=self.FoVx, fovY=self.FoVy).transpose(0,1).cuda()
+        self.full_proj_transform = (self.world_view_transform.unsqueeze(0).bmm(self.projection_matrix.unsqueeze(0))).squeeze(0)
+        self.camera_center = self.world_view_transform.inverse()[3, :3]
+
 
 class MyParams():
     def __init__(self, sceneIndices = None, n_cameras = -1, test = False, trainIndices = None, percentage = 1.0):
