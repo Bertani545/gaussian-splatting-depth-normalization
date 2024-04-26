@@ -3,7 +3,8 @@ from random import randint, sample
 from scene import Scene
 import numpy as np
 from utils.graphics_utils import getWorld2View2, getProjectionMatrix
-
+import torch
+from torch import nn
 
 def rodrigues_Matrix(axis, angle):
     c = np.cos(angle)
