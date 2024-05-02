@@ -1,0 +1,2 @@
+In scene/dataset_renders.py, change readColmapScene so it automatically reads the training cameras we want.
+This could not be worth it if we want to interpolate the route

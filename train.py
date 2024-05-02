@@ -54,14 +54,6 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
     workCameras = cameras_Subset(scene, subsetParams)
     #We save the training and test cameras
     workCameras.saveCameras(dataset.model_path)
-    '''
-    if cam_subset.n_cameras > 0:
-        trainCameras = cameras_Subset(scene, n_cameras=cam_subset.n_cameras)
-    elif cam_subset.indices:
-        trainCameras = cameras_Subset(scene, indices=cam_subset.indices)
-    else:
-        trainCameras = cameras_Subset(scene)
-    '''
     
 
     viewpoint_stack = None
@@ -267,8 +259,8 @@ if __name__ == "__main__":
 
     print("Optimizing " + args.model_path)
 
-    # Initialize system state (RNG)
-    safe_state(args.quiet)
+    # Initialize system state (RNG) to always the same
+    #safe_state(args.quiet)
 
     # Start GUI server, configure and run training
     network_gui.init(args.ip, args.port)

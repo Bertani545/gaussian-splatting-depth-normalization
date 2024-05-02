@@ -17,9 +17,11 @@ from utils.graphics_utils import getWorld2View2, getProjectionMatrix
 class Camera(nn.Module):
     def __init__(self, colmap_id, R, T, FoVx, FoVy, image, gt_alpha_mask,
                  image_name, uid,
-                 trans=np.array([0.0, 0.0, 0.0]), scale=1.0, data_device = "cuda"
-                 ):
+                 trans=np.array([0.0, 0.0, 0.0]), scale=1.0, data_device = "cuda",
+                 points3D_ids):
         super(Camera, self).__init__()
+
+        self.points3D_ids = points3D_ids #Added for getting points on used cameras
 
         self.uid = uid
         self.colmap_id = colmap_id
