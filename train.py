@@ -101,7 +101,7 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
 
         if create_new:
             #Create new camera
-            rand_cam = workCameras.getTrainSubset()[randint(0, len(workCameras.getTrainSubset()) - 1)]
+            rand_cam = scene.getTrainCameras()[randint(0, len(scene.getTrainCameras()) - 1)]
             viewpoint_cam = MiniCam_FromCam(rand_cam)
         else:
             if not viewpoint_stack:

@@ -1,3 +1,4 @@
+
 #
 # Copyright (C) 2023, Inria
 # GRAPHDECO research group, https://team.inria.fr/graphdeco
@@ -24,6 +25,7 @@ from utils.sh_utils import SH2RGB
 from scene.gaussian_model import BasicPointCloud
 
 from custom_classes import MyParams
+from random import sample
 
 class CameraInfo(NamedTuple):
     uid: int
@@ -180,20 +182,21 @@ def readColmapSceneInfo(path, images, eval, params, llffhold=8):
     train_cam_infos = []
     test_cam_infos = []
 
+    trainIndices = []
 
     if params.MakeTest:
         if params.TrainIndices:
             for idx in params.TrainIndices:
                 train_cam_infos.append(CameraSubset[idx]) #Could change to indices of cameras and not of the subset
-
+                trainIndices.append(SceneIndices[idx])
         else:
-            trainSamples = int(len(CameraSubset) * params.Percentage)
-            TrainIndices = sample(params.SceneIndices, trainSamples).sort()
-
-            for idx in TrainIndices:
+            trainSamples = int(len(SceneIndices) * params.Percentage)
+            trainIndices = sample(SceneIndices, trainSamples)
+            trainIndices.sort()
+            for idx in trainIndices:
                 train_cam_infos.append(cam_infos[idx])
 
-        test_cam_infos = [_ for _ in CameraSubset if _ not in train_cam_infos]
+        test_cam_infos = [cam_infos[idx] for idx in SceneIndices if idx not in trainIndices]
 
     else:
         train_cam_infos = cam_infos
@@ -221,9 +224,12 @@ def readColmapSceneInfo(path, images, eval, params, llffhold=8):
         pcd = None
 
     # ----------------- Our code seasons 2 -------------------
-    if not params.AllPoints
+    if not params.AllPoints:
         #We filter the points. They are still in the order we read it from the original file
-        points_to_keep = set(train_cam_infos.point3D_ids)
+        points_to_keep = set()
+        for ci in train_cam_infos:
+            ids = set(ci.point3D_ids)
+            points_to_keep = points_to_keep.union(ids)
 
         filtered_points  = [pcd.points[i]  for i, Id in enumerate(ids) if Id in points_to_keep]
         filtered_colors  = [pcd.colors[i]  for i, Id in enumerate(ids) if Id in points_to_keep]
