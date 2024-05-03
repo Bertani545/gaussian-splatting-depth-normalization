@@ -18,11 +18,14 @@ from scene.gaussian_model import GaussianModel
 from arguments import ModelParams
 from utils.camera_utils import cameraList_from_camInfos, camera_to_JSON
 
+
+from custom_classes import MyParams, modifyPointCloud
+
 class Scene:
 
     gaussians : GaussianModel
 
-    def __init__(self, args : ModelParams, gaussians : GaussianModel, load_iteration=None, shuffle=True, resolution_scales=[1.0]):
+    def __init__(self, args : ModelParams, gaussians : GaussianModel, params : MyParams, load_iteration=None, shuffle=True, resolution_scales=[1.0]):
         """
         :param path: Path to colmap scene main folder.
         """
@@ -41,7 +44,7 @@ class Scene:
         self.test_cameras = {}
 
         if os.path.exists(os.path.join(args.source_path, "sparse")):
-            scene_info = sceneLoadTypeCallbacks["Colmap"](args.source_path, args.images, args.eval)
+            scene_info = sceneLoadTypeCallbacks["Colmap"](args.source_path, args.images, args.eval, params)
         elif os.path.exists(os.path.join(args.source_path, "transforms_train.json")):
             assert False, "Blender not supported for this version."
             #print("Found transforms_train.json file, assuming Blender data set!")
@@ -81,6 +84,8 @@ class Scene:
                                                            "iteration_" + str(self.loaded_iter),
                                                            "point_cloud.ply"))
         else:
+            print("I was triggered")
+            #This saves pcd to pyTorch
             self.gaussians.create_from_pcd(scene_info.point_cloud, self.cameras_extent)
 
     def save(self, iteration):

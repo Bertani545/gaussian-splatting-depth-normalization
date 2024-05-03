@@ -21,9 +21,7 @@ from argparse import ArgumentParser
 from arguments import ModelParams, PipelineParams, get_combined_args
 from gaussian_renderer import GaussianModel
 
-from custom_classes import *
-
-def render_set(model_path, name, iteration, views, gaussians, pipeline, background, original_indices):
+def render_set(model_path, name, iteration, views, gaussians, pipeline, background):
     render_path = os.path.join(model_path, name, "ours_{}".format(iteration), "renders")
     gts_path = os.path.join(model_path, name, "ours_{}".format(iteration), "gt")
 
@@ -33,10 +31,10 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
     for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
         rendering = render(view, gaussians, pipeline, background)["render"]
         gt = view.original_image[0:3, :, :]
-        torchvision.utils.save_image(rendering, os.path.join(render_path, '{0:05d}'.format(original_indices[idx]) + ".png"))
-        torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(original_indices[idx]) + ".png"))
+        torchvision.utils.save_image(rendering, os.path.join(render_path, '{0:05d}'.format(idx) + ".png"))
+        torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
 
-def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParams):
+def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParams, skip_train : bool, skip_test : bool):
     with torch.no_grad():
         gaussians = GaussianModel(dataset.sh_degree)
         scene = Scene(dataset, gaussians, load_iteration=iteration, shuffle=False)
@@ -44,21 +42,11 @@ def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParam
         bg_color = [1,1,1] if dataset.white_background else [0, 0, 0]
         background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
 
-
-        usedCameras = cameras_Subset()
-        usedCameras.read_indices(dataset.model_path, scene)
-
-
-        #We add our verification
-        skip_test = False if len(usedCameras.TestIndices) > 0 else True
-        skip_train = False if len(usedCameras.TrainIndices) > 0 else True
-
-
         if not skip_train:
-             render_set(dataset.model_path, "train", scene.loaded_iter, usedCameras.getTrainSubset(), gaussians, pipeline, background, usedCameras.TrainIndices)
+             render_set(dataset.model_path, "train", scene.loaded_iter, scene.getTrainCameras(), gaussians, pipeline, background)
 
         if not skip_test:
-             render_set(dataset.model_path, "test", scene.loaded_iter, usedCameras.getTestSubset(), gaussians, pipeline, background, usedCameras.TestIndices)
+             render_set(dataset.model_path, "test", scene.loaded_iter, scene.getTestCameras(), gaussians, pipeline, background)
 
 if __name__ == "__main__":
     # Set up command line argument parser
@@ -75,5 +63,4 @@ if __name__ == "__main__":
     # Initialize system state (RNG)
     safe_state(args.quiet)
 
-
-    render_sets(model.extract(args), args.iteration, pipeline.extract(args))
+    render_sets(model.extract(args), args.iteration, pipeline.extract(args), args.skip_train, args.skip_test)

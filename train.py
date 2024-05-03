@@ -35,9 +35,13 @@ from custom_classes import *
 
 def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
     first_iter = 0
+
+    #workCameras = cameras_Subset()
+
     tb_writer = prepare_output_and_logger(dataset)
     gaussians = GaussianModel(dataset.sh_degree)
-    scene = Scene(dataset, gaussians, shuffle = False)
+    scene = Scene(dataset, gaussians, subsetParams, shuffle = False) # Gets a subset if possible. Also filters points
+    
     gaussians.training_setup(opt)
     if checkpoint:
         (model_params, first_iter) = torch.load(checkpoint)
@@ -50,10 +54,10 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
     iter_end = torch.cuda.Event(enable_timing = True)
 
 
-    # Gets a subset if possible
-    workCameras = cameras_Subset(scene, subsetParams)
+    
+    
     #We save the training and test cameras
-    workCameras.saveCameras(dataset.model_path)
+    #workCameras.saveCameras(dataset.model_path)
     
 
     viewpoint_stack = None
@@ -101,8 +105,8 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
             viewpoint_cam = MiniCam_FromCam(rand_cam)
         else:
             if not viewpoint_stack:
-                viewpoint_stack = workCameras.getTrainSubset().copy()
-            viewpoint_cam = viewpoint_stack.pop(randint(0, len(viewpoint_stack) - 1))
+                viewpoint_stack = scene.getTrainCameras().copy()
+            viewpoint_cam = viewpoint_stack.pop(randint(0, len(viewpoint_stack)-1))
 
         # Render
         if (iteration - 1) == debug_from:
@@ -255,6 +259,7 @@ if __name__ == "__main__":
     myParams.SceneIndices = [0, 1, 2, 3, 4, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284,  300]
     myParams.MakeTest = True
     myParams.Percentage = .8
+    myParams.AllPoints = False
 
 
     print("Optimizing " + args.model_path)

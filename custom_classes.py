@@ -6,6 +6,9 @@ from utils.graphics_utils import getWorld2View2, getProjectionMatrix
 import torch
 from torch import nn
 
+from scene.dataset_readers import SceneInfo
+from utils.graphics_utils import BasicPointCloud
+
 def rodrigues_Matrix(axis, angle):
     c = np.cos(angle)
     s = np.sin(angle)
@@ -30,6 +33,17 @@ def rodrigues_Matrix(axis, angle):
     mat[2][2] = oc * z * z + c;
 
     return mat
+
+'''
+class BasicPointCloud(NamedTuple):
+    points : np.array
+    colors : np.array
+    normals : np.array
+'''
+
+def modifyPointCloud( sceneInfo : SceneInfo):
+    sceneInfo.point_cloud
+    
 
 
 class MiniCam_FromCam:
@@ -63,13 +77,14 @@ class MiniCam_FromCam:
 
 
 class MyParams():
-    def __init__(self, sceneIndices = None, n_cameras = -1, test = False, trainIndices = None, percentage = 1.0):
+    def __init__(self, sceneIndices = None, n_cameras = -1, test = False, trainIndices = None, percentage = 1.0, allPoins = False):
         self.SceneIndices = sceneIndices.sort() if sceneIndices else None
         self.N_cameras = n_cameras
 
         self.MakeTest = test
         self.TrainIndices = trainIndices.sort() if trainIndices else None # Relative to the SceneIndices
         self.Percentage = max(0.0, min(percentage, 1.0))
+        self.AllPoints = allPoints
 
 class cameras_Subset :
 
@@ -82,6 +97,7 @@ class cameras_Subset :
         self.TestSubset = []
         self.TrainSubset = []
 
+        ## ----- To be deleted -------
         if scene and params:
             self.AllCameras = scene.getTrainCameras().copy()
         

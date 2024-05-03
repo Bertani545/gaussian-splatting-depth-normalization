@@ -99,7 +99,7 @@ def read_points3D_text(path):
             if len(line) > 0 and line[0] != "#":
                 num_points += 1
 
-
+    ids = np.empty((num_points,1))            
     xyzs = np.empty((num_points, 3))
     rgbs = np.empty((num_points, 3))
     errors = np.empty((num_points, 1))
@@ -112,15 +112,17 @@ def read_points3D_text(path):
             line = line.strip()
             if len(line) > 0 and line[0] != "#":
                 elems = line.split()
+                Id = np.array(int(elems[0])) #Modified
                 xyz = np.array(tuple(map(float, elems[1:4])))
                 rgb = np.array(tuple(map(int, elems[4:7])))
                 error = np.array(float(elems[7]))
+                ids[count] = Id
                 xyzs[count] = xyz
                 rgbs[count] = rgb
                 errors[count] = error
                 count += 1
 
-    return xyzs, rgbs, errors
+    return ids, xyzs, rgbs, errors
 
 def read_points3D_binary(path_to_model_file):
     """
@@ -133,6 +135,7 @@ def read_points3D_binary(path_to_model_file):
     with open(path_to_model_file, "rb") as fid:
         num_points = read_next_bytes(fid, 8, "Q")[0]
 
+        ids = np.empty((num_points,1))
         xyzs = np.empty((num_points, 3))
         rgbs = np.empty((num_points, 3))
         errors = np.empty((num_points, 1))
@@ -140,6 +143,7 @@ def read_points3D_binary(path_to_model_file):
         for p_id in range(num_points):
             binary_point_line_properties = read_next_bytes(
                 fid, num_bytes=43, format_char_sequence="QdddBBBd")
+            Id = np.array(binary_point_line_properties[0]) #Modified
             xyz = np.array(binary_point_line_properties[1:4])
             rgb = np.array(binary_point_line_properties[4:7])
             error = np.array(binary_point_line_properties[7])
@@ -148,10 +152,11 @@ def read_points3D_binary(path_to_model_file):
             track_elems = read_next_bytes(
                 fid, num_bytes=8*track_length,
                 format_char_sequence="ii"*track_length)
+            ids[p_id] = Id
             xyzs[p_id] = xyz
             rgbs[p_id] = rgb
             errors[p_id] = error
-    return xyzs, rgbs, errors
+    return ids, xyzs, rgbs, errors
 
 def read_intrinsics_text(path):
     """
@@ -204,7 +209,7 @@ def read_extrinsics_binary(path_to_model_file):
                                        format_char_sequence="ddq"*num_points2D)
             xys = np.column_stack([tuple(map(float, x_y_id_s[0::3])),
                                    tuple(map(float, x_y_id_s[1::3]))])
-            point3D_ids = np.array(tuple(map(int, x_y_id_s[2::3])))
+            point3D_ids = np.array(x_y_id_s[2::3], dtype=np.int_) #Save the ids as a numpy array
             images[image_id] = Image(
                 id=image_id, qvec=qvec, tvec=tvec,
                 camera_id=camera_id, name=image_name,
