@@ -88,8 +88,8 @@ class MyParams():
 
 class cameras_Subset :
 
-    def __init__(self, scene : Scene = None, params : MyParams = None):
-        
+    #def __init__(self, scene : Scene = None, params : MyParams = None):
+    def __init__(self):
         self.AllCameras = []
         self.SceneIndices = []
         self.TestIndices = []
@@ -172,7 +172,7 @@ class cameras_Subset :
             for index in self.TestIndices:
                 file.write(str(index) + '\n')
 
-    def read_indices(self, outputPath, scene : Scene):
+    def read_indices(self, outputPath, scene):
         self.AllCameras = scene.getTrainCameras().copy()
 
         path = os.path.join(outputPath, "usedCameras.txt")
