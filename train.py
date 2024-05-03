@@ -36,7 +36,7 @@ from custom_classes import *
 def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
     first_iter = 0
 
-    #workCameras = cameras_Subset()
+    camSubset = cameras_Subset()
 
     tb_writer = prepare_output_and_logger(dataset)
     gaussians = GaussianModel(dataset.sh_degree)
@@ -54,8 +54,11 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
     iter_end = torch.cuda.Event(enable_timing = True)
 
 
-    
-    
+    #We save our train and test datasets
+    camSubset = cameras_Subset()
+    camSubset.TrainIndices = subsetParams.TrainIndices
+    camSubset.TestIndices = subsetParams.TestIndices
+    camSubset.saveCameras(dataset.model_path)
     #We save the training and test cameras
     #workCameras.saveCameras(dataset.model_path)
     

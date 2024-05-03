@@ -183,6 +183,7 @@ def readColmapSceneInfo(path, images, eval, params, llffhold=8):
     test_cam_infos = []
 
     trainIndices = []
+    testIndices = []
 
     if params.MakeTest:
         if params.TrainIndices:
@@ -197,10 +198,16 @@ def readColmapSceneInfo(path, images, eval, params, llffhold=8):
                 train_cam_infos.append(cam_infos[idx])
 
         test_cam_infos = [cam_infos[idx] for idx in SceneIndices if idx not in trainIndices]
+        testIndices = [_ for _ in SceneIndices if _ not in trainIndices]
 
     else:
         train_cam_infos = cam_infos
+        trainIndices = SceneIndices
+
         test_cam_infos = []
+
+    params.TrainIndices = trainIndices
+    params.TestIndices = testIndices
 
 
     # ---------------------- End of our Code -------------------------

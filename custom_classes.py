@@ -79,10 +79,13 @@ class MyParams():
         self.N_cameras = n_cameras
 
         self.MakeTest = test
-        self.TrainIndices = trainIndices.sort() if trainIndices else None # Relative to the SceneIndices
         self.Percentage = max(0.0, min(percentage, 1.0))
         self.AllPoints = allPoints
-'''
+
+        #Modified when starting an scene
+        self.TrainIndices = trainIndices.sort() if trainIndices else None # Relative to the SceneIndices
+        self.TestIndices = []
+
 class cameras_Subset :
 
     def __init__(self, scene : Scene = None, params : MyParams = None):
@@ -94,6 +97,8 @@ class cameras_Subset :
         self.TestSubset = []
         self.TrainSubset = []
 
+
+        '''
         ## ----- To be deleted -------
         if scene and params:
             self.AllCameras = scene.getTrainCameras().copy()
@@ -136,6 +141,7 @@ class cameras_Subset :
             else:
                 self.TrainSubset = self.CameraSubset.copy()
                 self.TrainIndices = params.SceneIndices.copy()
+        '''
 
     def getSubset(self):
         return self.CameraSubset
@@ -187,4 +193,4 @@ class cameras_Subset :
 
         self.loadViews()
 
-'''
+
