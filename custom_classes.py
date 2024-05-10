@@ -10,8 +10,6 @@ from torch import nn
 from utils.graphics_utils import BasicPointCloud
 
 
-from scipy.spatial.transform import Rotation
-
 def rodrigues_Matrix(axis, c, s):
     #c = np.cos(angle)
     #s = np.sin(angle)
@@ -47,43 +45,44 @@ Camera(colmap_id=cam_info.uid, R=cam_info.R, T=cam_info.T,
 
 
 class NewCameras():
-    def __init__(self, scene):
-        self.pointsCenter = torch.mean(scene.gaussians._xyz, dim=0)
+    def __init__(self, scene, res = 1.0):
+        self.pointsCenter = torch.mean(scene.gaussians._xyz, dim=0).cpu().numpy()
 
-        positions = np.array([camera.T for camera in scene.train_cameras])
+        positions = np.array([camera.T for camera in scene.train_cameras[res]])
         positions_reshaped = positions.reshape(-1, 1, 3)
         self.distances = np.linalg.norm(positions_reshaped - positions, axis=2)
         self.sorted_indices = np.argsort(self.distances, axis=1)
 
-        self.cameras = scene.train_cameras #Hopefully is the reference :b
+        self.cameras = scene.train_cameras[res]  #Hopefully is the reference :b
 
 
-        def __call__(self):
-            camera_id = random.randint(0, len(self.cameras)-1)
-            new_camera = MiniCam_FromCam(cameras[camera_id])
+    def __call__(self):
+        camera_id = randint(0, len(self.cameras)-1)
+        new_camera = MiniCam_FromCam(self.cameras[camera_id])
 
-            #Take closest one
-            cameras_idx = np.array([camera_id, sorted_indices[camera_id,1]])
+        #Take closest one
+        cameras_idx = np.array([camera_id, self.sorted_indices[camera_id,1]])
 
-            #Transform new camera position and rotation
-            radius = np.linalg.norm(self.pointsCenter - scene.train_cameras[camera_id].T)
+        #Transform new camera position and rotation
+        radius = np.linalg.norm(self.pointsCenter - self.cameras[camera_id].T)
 
-            random_direction = np.random.normal(size=3)
-            random_direction = random_direction / np.linalg.norm(random_direction)
+        random_direction = np.random.normal(size=3)
+        random_direction = random_direction / np.linalg.norm(random_direction)
 
-            new_camera.T = scene.train_cameras[camera_id].T + random_direction * distances[cameras_idx[0], cameras_idx[1]] / 1.5
-            push = points_mean - new_camera.T
-            new_camera.T += (np.linalg.norm(push) - radius) * (push/np.linalg.norm(push))
+        new_camera.T = self.cameras[camera_id].T + random_direction * self.distances[cameras_idx[0], cameras_idx[1]] / 1.5
+        push = self.pointsCenter - new_camera.T
+        new_camera.T += (np.linalg.norm(push) - radius) * (push/np.linalg.norm(push))
 
-            #Rotation
-            front = np.array([0,0,1.0]) #Espero
-            direction = - (0.2 * random_direction - cameras[camera_id].R * front)
-            direction /= np.linalg.norm(direction)
+        #Rotation
+        front = np.array([0,0,1.0]) #Espero
+        direction = - (0.2 * random_direction - self.cameras[camera_id].R @ front)
+        direction /= np.linalg.norm(direction)
 
-            axis = np.cross(front, direction)
-            new_camera.R = rodrigues_Matrix(axis/np.linalg.norm(axis), np.dot(front, direction), np.linalg.norm(axis))
-            
-            return new_camera
+        axis = np.cross(front, direction)
+        new_camera.R = rodrigues_Matrix(axis/np.linalg.norm(axis), np.dot(front, direction), np.linalg.norm(axis))
+        
+        new_camera.recalculate()
+        return new_camera
 
 class MiniCam_FromCam:
     def __init__(self, cam, scale=1.0):
@@ -94,7 +93,19 @@ class MiniCam_FromCam:
         self.znear = cam.znear
         self.zfar = cam.zfar
 
-        self.world_view_transform = torch.tensor(getWorld2View2(R, T, trans, scale)).transpose(0, 1).cuda()
+        self.R = cam.R
+        self.T = cam.T
+        self.trans = cam.trans
+        self.scale = cam.scale
+
+        self.world_view_transform = torch.tensor(getWorld2View2(self.R, self.T, self.trans, self.scale)).transpose(0, 1).cuda()
+        self.projection_matrix = getProjectionMatrix(znear=self.znear, zfar=self.zfar, fovX=self.FoVx, fovY=self.FoVy).transpose(0,1).cuda()
+        self.full_proj_transform = (self.world_view_transform.unsqueeze(0).bmm(self.projection_matrix.unsqueeze(0))).squeeze(0)
+        self.camera_center = self.world_view_transform.inverse()[3, :3]
+   
+
+    def recalculate(self):
+        self.world_view_transform = torch.tensor(getWorld2View2(self.R, self.T, self.trans, self.scale)).transpose(0, 1).cuda()
         self.projection_matrix = getProjectionMatrix(znear=self.znear, zfar=self.zfar, fovX=self.FoVx, fovY=self.FoVy).transpose(0,1).cuda()
         self.full_proj_transform = (self.world_view_transform.unsqueeze(0).bmm(self.projection_matrix.unsqueeze(0))).squeeze(0)
         self.camera_center = self.world_view_transform.inverse()[3, :3]
