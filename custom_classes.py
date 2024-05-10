@@ -9,9 +9,12 @@ from torch import nn
 #from scene.dataset_readers import SceneInfo
 from utils.graphics_utils import BasicPointCloud
 
-def rodrigues_Matrix(axis, angle):
-    c = np.cos(angle)
-    s = np.sin(angle)
+
+from scipy.spatial.transform import Rotation
+
+def rodrigues_Matrix(axis, c, s):
+    #c = np.cos(angle)
+    #s = np.sin(angle)
     oc = 1 - c
 
     x = axis[0]
@@ -34,16 +37,68 @@ def rodrigues_Matrix(axis, angle):
 
     return mat
 
-'''
-class BasicPointCloud(NamedTuple):
-    points : np.array
-    colors : np.array
-    normals : np.array
-'''
+"""
+Camera(colmap_id=cam_info.uid, R=cam_info.R, T=cam_info.T, 
+                  FoVx=cam_info.FovX, FoVy=cam_info.FovY, 
+                  image=gt_image, gt_alpha_mask=loaded_mask,
+                  image_name=cam_info.image_name, uid=id, data_device=args.data_device,
+                  points3D_ids=cam_info.point3D_ids)
+"""
 
 
+class NewCameras():
+    def __init__(self, scene):
+        self.pointsCenter = torch.mean(scene.gaussians._xyz, dim=0)
+
+        positions = np.array([camera.T for camera in scene.train_cameras])
+        positions_reshaped = positions.reshape(-1, 1, 3)
+        self.distances = np.linalg.norm(positions_reshaped - positions, axis=2)
+        self.sorted_indices = np.argsort(self.distances, axis=1)
+
+        self.cameras = scene.train_cameras #Hopefully is the reference :b
+
+
+        def __call__(self):
+            camera_id = random.randint(0, len(self.cameras)-1)
+            new_camera = MiniCam_FromCam(cameras[camera_id])
+
+            #Take closest one
+            cameras_idx = np.array([camera_id, sorted_indices[camera_id,1]])
+
+            #Transform new camera position and rotation
+            radius = np.linalg.norm(self.pointsCenter - scene.train_cameras[camera_id].T)
+
+            random_direction = np.random.normal(size=3)
+            random_direction = random_direction / np.linalg.norm(random_direction)
+
+            new_camera.T = scene.train_cameras[camera_id].T + random_direction * distances[cameras_idx[0], cameras_idx[1]] / 1.5
+            push = points_mean - new_camera.T
+            new_camera.T += (np.linalg.norm(push) - radius) * (push/np.linalg.norm(push))
+
+            #Rotation
+            front = np.array([0,0,1.0]) #Espero
+            direction = - (0.2 * random_direction - cameras[camera_id].R * front)
+            direction /= np.linalg.norm(direction)
+
+            axis = np.cross(front, direction)
+            new_camera.R = rodrigues_Matrix(axis/np.linalg.norm(axis), np.dot(front, direction), np.linalg.norm(axis))
+            
+            return new_camera
 
 class MiniCam_FromCam:
+    def __init__(self, cam, scale=1.0):
+        self.image_width = cam.image_width
+        self.image_height = cam.image_height    
+        self.FoVy = cam.FoVy
+        self.FoVx = cam.FoVx
+        self.znear = cam.znear
+        self.zfar = cam.zfar
+
+        self.world_view_transform = torch.tensor(getWorld2View2(R, T, trans, scale)).transpose(0, 1).cuda()
+        self.projection_matrix = getProjectionMatrix(znear=self.znear, zfar=self.zfar, fovX=self.FoVx, fovY=self.FoVy).transpose(0,1).cuda()
+        self.full_proj_transform = (self.world_view_transform.unsqueeze(0).bmm(self.projection_matrix.unsqueeze(0))).squeeze(0)
+        self.camera_center = self.world_view_transform.inverse()[3, :3]
+    """
     def __init__(self, cam, rot_offset=np.radians(0.1), trans_offset=np.array([0.01, 0.02, 0.03]), trans=np.array([0.0, 0.0, 0.0]), scale=1.0):
         self.image_width = cam.image_width
         self.image_height = cam.image_height    
@@ -71,7 +126,7 @@ class MiniCam_FromCam:
         self.projection_matrix = getProjectionMatrix(znear=self.znear, zfar=self.zfar, fovX=self.FoVx, fovY=self.FoVy).transpose(0,1).cuda()
         self.full_proj_transform = (self.world_view_transform.unsqueeze(0).bmm(self.projection_matrix.unsqueeze(0))).squeeze(0)
         self.camera_center = self.world_view_transform.inverse()[3, :3]
-
+        """
 
 class MyParams():
     def __init__(self, sceneIndices = None, n_cameras = -1, test = False, trainIndices = None, percentage = 1.0, allPoints = False):

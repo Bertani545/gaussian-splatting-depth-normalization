@@ -59,8 +59,12 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
     camSubset.TrainIndices = subsetParams.TrainIndices
     camSubset.TestIndices = subsetParams.TestIndices
     camSubset.saveCameras(dataset.model_path)
-    #We save the training and test cameras
-    #workCameras.saveCameras(dataset.model_path)
+
+
+    #Data for camera creation
+    with torch.no_grad():
+        GetNewCamera = NewCameras(scene)
+
     
 
     viewpoint_stack = None
@@ -104,8 +108,7 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
 
         if create_new:
             #Create new camera
-            rand_cam = scene.getTrainCameras()[randint(0, len(scene.getTrainCameras()) - 1)]
-            viewpoint_cam = MiniCam_FromCam(rand_cam)
+            viewpoint_cam = GetNewCamera()
         else:
             if not viewpoint_stack:
                 viewpoint_stack = scene.getTrainCameras().copy()
