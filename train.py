@@ -103,38 +103,58 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
         viewpoint_cam = viewpoint_stack.pop(randint(0, len(viewpoint_stack)-1))
         '''
 
-        # Pick a random Camera or create a new one
-        create_new = True if randint(0, 100) < 10 else False
+        #Two posible trainings. Both do not occur in the same run of the program
+        if subsetParams.UseDepths:
+            # Pick a random Camera or create a new one
+            create_new = True if randint(0, 100) < 10 else False
 
-        if create_new:
-            #Create new camera
-            viewpoint_cam = GetNewCamera()
+            if create_new:
+                #Create new camera
+                viewpoint_cam = GetNewCamera()
+            else:
+                if not viewpoint_stack:
+                    viewpoint_stack = scene.getTrainCameras().copy()
+                viewpoint_cam = viewpoint_stack.pop(randint(0, len(viewpoint_stack)-1))
+
+            # Render
+            if (iteration - 1) == debug_from:
+                pipe.debug = True
+
+            bg = torch.rand((3), device="cuda") if opt.random_background else background
+
+            render_pkg = render(viewpoint_cam, gaussians, pipe, bg)
+
+            image, viewspace_point_tensor, visibility_filter, radii = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
+
+            depths = render_pkg["depths"]
+            
+
+            # Loss. Depends on camera used
+            if create_new:
+                loss = TVL(depths)
+            else:
+                gt_image = viewpoint_cam.original_image.cuda()
+                Ll1 = l1_loss(image, gt_image)
+                loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image)) + TVL(depths)
         else:
+
             if not viewpoint_stack:
                 viewpoint_stack = scene.getTrainCameras().copy()
             viewpoint_cam = viewpoint_stack.pop(randint(0, len(viewpoint_stack)-1))
 
-        # Render
-        if (iteration - 1) == debug_from:
-            pipe.debug = True
+            # Render
+            if (iteration - 1) == debug_from:
+                pipe.debug = True
 
-        bg = torch.rand((3), device="cuda") if opt.random_background else background
+            bg = torch.rand((3), device="cuda") if opt.random_background else background
 
-        render_pkg = render(viewpoint_cam, gaussians, pipe, bg)
+            render_pkg = render(viewpoint_cam, gaussians, pipe, bg)
 
-        image, viewspace_point_tensor, visibility_filter, radii = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
-
-        depths = render_pkg["depths"]
-        
-
-        # Loss. Depends on camera used
-        if create_new:
-            loss = TVL(depths)
-        else:
+            image, viewspace_point_tensor, visibility_filter, radii = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
+            
             gt_image = viewpoint_cam.original_image.cuda()
             Ll1 = l1_loss(image, gt_image)
-            loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image)) + TVL(depths) #change to accept depth
-
+            loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
         
 
 
@@ -256,16 +276,20 @@ if __name__ == "__main__":
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--checkpoint_iterations", nargs="+", type=int, default=[])
     parser.add_argument("--start_checkpoint", type=str, default = None)
+    parser.add_argument("--cameras", nargs="+", type=int, default=None)
+    parser.add_argument("--depths", type=str, default='true', choices=['true', 'false'])
     args = parser.parse_args(sys.argv[1:])
     args.save_iterations.append(args.iterations)
     
 
     #New arguments
     myParams = MyParams()
-    myParams.SceneIndices = [0, 1, 2, 3, 4, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284,  300]
+    myParams.SceneIndices = None
     myParams.MakeTest = True
-    myParams.Percentage = .8
     myParams.AllPoints = False
+
+    myParams.TrainIndices = args.cameras
+    myParams.UseDepths = args.depths.lower() == "true"
 
 
     print("Optimizing " + args.model_path)

@@ -140,13 +140,15 @@ class MiniCam_FromCam:
         """
 
 class MyParams():
-    def __init__(self, sceneIndices = None, n_cameras = -1, test = False, trainIndices = None, percentage = 1.0, allPoints = False):
+    def __init__(self, sceneIndices = None, n_cameras = -1, test = False, trainIndices = None, percentage = 1.0, allPoints = False, useDepths = True):
         self.SceneIndices = sceneIndices.sort() if sceneIndices else None
         self.N_cameras = n_cameras
 
         self.MakeTest = test
         self.Percentage = max(0.0, min(percentage, 1.0))
         self.AllPoints = allPoints
+
+        self.UseDepths = useDepths
 
         #Modified when starting an scene
         self.TrainIndices = trainIndices.sort() if trainIndices else None # Relative to the SceneIndices

@@ -233,10 +233,17 @@ def readColmapSceneInfo(path, images, eval, params, llffhold=8):
     # ----------------- Our code seasons 2 -------------------
     if not params.AllPoints:
         #We filter the points. They are still in the order we read it from the original file
+        #We save only the ones seen by 3 or more cameras
         points_to_keep = set()
         for ci in train_cam_infos:
-            ids = set(ci.point3D_ids)
-            points_to_keep = points_to_keep.union(ids)
+            for point_id in ci.point3D_ids:
+                    if point_id in point_counts:
+                        point_counts[point_id] += 1
+                    else:
+                        point_counts[point_id] = 1
+
+        # Filter points seen by at least 3 cameras
+        points_to_keep = {point_id for point_id, count in point_counts.items() if count >= 3}
 
         filtered_points  = [pcd.points[i]  for i, Id in enumerate(ids) if Id in points_to_keep]
         filtered_colors  = [pcd.colors[i]  for i, Id in enumerate(ids) if Id in points_to_keep]
