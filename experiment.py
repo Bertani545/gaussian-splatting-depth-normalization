@@ -35,22 +35,22 @@ if __name__ == "__main__":
 
 				#Train model with depth normalization
 				output_path = './results/' + name  + "/" + str(n_cam) + "_cams/depth/" + str(i)
-				command = "python3 train.py -s {} -m {} --sh_degree 1 --opacity_reset_interval 100000000 --iterations 30000 --cameras {} --depths True".format(path, output_path, cameras)
+				command = "python3 train.py -s {} -m {} --sh_degree 1 --opacity_reset_interval 100000000 --iterations 30000 --save_iterations 30000 --cameras {} --depths true".format(path, output_path, cameras)
 				subprocess.run(command, shell=True)
 				#Gets metrics
-				command = "python3 render.py" + output_path
+				command = "python3 render.py -m " + output_path
 				subprocess.run(command, shell=True)
-				command = "python3 metrics.py" + output_path
+				command = "python3 metrics.py -m " + output_path
 				subprocess.run(command, shell=True)
 
 				
 				#Train model with no depth normalization
 				output_path = './results/' + name  + "/" + str(n_cam) + "_cams/no_depth/" + str(i)
-				command = "python3 train.py -s {} -m {} --sh_degree 1 --opacity_reset_interval 100000000 --iterations 30000 --cameras {} --depths False".format(path, output_path, cameras)
+				command = "python3 train.py -s {} -m {} --sh_degree 1 --opacity_reset_interval 100000000 --iterations 30000 --save_iterations 30000 --cameras {} --depths false".format(path, output_path, cameras)
 				subprocess.run(command, shell=True)
 				#Metrics
-				command = "python3 render.py" + output_path
+				command = "python3 render.py -m " + output_path
 				subprocess.run(command, shell=True)
-				command = "python3 metrics.py" + output_path
+				command = "python3 metrics.py -m" + output_path
 				subprocess.run(command, shell=True)
 				

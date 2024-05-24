@@ -1,5 +1,1 @@
-../real_iconic/data2_hugetrike
-../real_iconic/data2_fernvlsb
-../real_iconic/data2_trexsanta
-../real_iconic/data5_leafscene
-../real_iconic/data5_lotr
+./dataset/data2_trexsanta

@@ -113,21 +113,23 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
 def fetchPly(path):
     plydata = PlyData.read(path)
     vertices = plydata['vertex']
+    ids = np.array(vertices['id'])
     positions = np.vstack([vertices['x'], vertices['y'], vertices['z']]).T
     colors = np.vstack([vertices['red'], vertices['green'], vertices['blue']]).T / 255.0
     normals = np.vstack([vertices['nx'], vertices['ny'], vertices['nz']]).T
-    return BasicPointCloud(points=positions, colors=colors, normals=normals)
+    return ids, BasicPointCloud(points=positions, colors=colors, normals=normals)
 
-def storePly(path, xyz, rgb):
+def storePly(path, ids, xyz, rgb):
     # Define the dtype for the structured array
-    dtype = [('x', 'f4'), ('y', 'f4'), ('z', 'f4'),
+    dtype = [('id', 'i4'),
+            ('x', 'f4'), ('y', 'f4'), ('z', 'f4'),
             ('nx', 'f4'), ('ny', 'f4'), ('nz', 'f4'),
             ('red', 'u1'), ('green', 'u1'), ('blue', 'u1')]
     
     normals = np.zeros_like(xyz)
 
     elements = np.empty(xyz.shape[0], dtype=dtype)
-    attributes = np.concatenate((xyz, normals, rgb), axis=1)
+    attributes = np.concatenate((ids, xyz, normals, rgb), axis=1)
     elements[:] = list(map(tuple, attributes))
 
     # Create the PlyData object and write to file
@@ -224,17 +226,18 @@ def readColmapSceneInfo(path, images, eval, params, llffhold=8):
         except:
             ids, xyz, rgb, _ = read_points3D_text(txt_path)
             #raise Exception("No txt permitted")
-        storePly(ply_path, xyz, rgb)
+        storePly(ply_path, ids, xyz, rgb)
     try:
-        pcd = fetchPly(ply_path)
+        ids, pcd = fetchPly(ply_path)
     except:
-        pcd = None
+        ids, pcd = None
 
     # ----------------- Our code seasons 2 -------------------
     if not params.AllPoints:
         #We filter the points. They are still in the order we read it from the original file
         #We save only the ones seen by 3 or more cameras
         points_to_keep = set()
+        point_counts = {}
         for ci in train_cam_infos:
             for point_id in ci.point3D_ids:
                     if point_id in point_counts:
