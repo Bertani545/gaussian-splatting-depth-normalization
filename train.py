@@ -131,13 +131,13 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
 
             # Loss. Depends on camera used
             if create_new:
-                loss = 100 *  TVL(depths)
+                loss = 10 *  TVL(depths)
                 Ll1 = 0
                 
             else:
                 gt_image = viewpoint_cam.original_image.cuda()
                 Ll1 = l1_loss(image, gt_image)
-                loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image)) +  100 * TVL(depths)
+                loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image)) +  10 * TVL(depths)
                 if iteration == opt.iterations:
                     print(f"TVL = {TVL(depths)}, L1 = {Ll1}, ssim = {ssim(image, gt_image)}")
         else:
@@ -299,7 +299,7 @@ if __name__ == "__main__":
     print("Optimizing " + args.model_path)
 
     # Initialize system state (RNG) to always the same
-    #safe_state(args.quiet)
+    safe_state(args.quiet)
 
     # Start GUI server, configure and run training
     network_gui.init(args.ip, args.port)

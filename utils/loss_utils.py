@@ -67,14 +67,14 @@ def TVL(img):
 
     channels, height, width = img.size()
    
-    assert channels == 1, "Inut image must be gray scale"
+    assert channels == 1, "Input image must be gray scale"
 
     
 
-    tv_h = ((img[:,1:,:] - img[:,:-1,:]).pow(2)).sum()
-    tv_w = ((img[:,:,1:] - img[:,:,:-1]).pow(2)).sum()
+    tv_h = (img[:,1:,:] - img[:,:-1,:]).abs().sum()
+    tv_w = (img[:,:,1:] - img[:,:,:-1]).abs().sum()
 
-    return (0.2 * (tv_h + tv_w).sqrt())/(height * width)
+    return (tv_h + tv_w)/(height * width)
 
 
 
