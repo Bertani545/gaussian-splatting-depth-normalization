@@ -155,15 +155,7 @@ def readColmapSceneInfo(path, images, eval, params, llffhold=8):
 
 
     # -------------------- We inject our code here -----------------------
-    '''
-    if eval:
-        train_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold != 0]
-        test_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold == 0]
-    else:
-        train_cam_infos = cam_infos
-        test_cam_infos = []
-    '''
-        
+    #This checks what actions should be performed given the parameters we provided
 
     if params.SceneIndices :
         SceneIndices = params.SceneIndices
@@ -176,8 +168,8 @@ def readColmapSceneInfo(path, images, eval, params, llffhold=8):
     for idx in SceneIndices:
         CameraSubset.append(cam_infos[idx])
 
-    print(f"Number of cameras: {len(CameraSubset)}")
-    print(f"Working with cameras {SceneIndices}")
+    #print(f"Number of cameras: {len(CameraSubset)}")
+    #print(f"Working with cameras {SceneIndices}")
 
 
     #Construct the train and test sets
@@ -232,7 +224,7 @@ def readColmapSceneInfo(path, images, eval, params, llffhold=8):
     except:
         ids, pcd = None
 
-    # ----------------- Our code seasons 2 -------------------
+    # ----------------- Our code seasons 2. Filters the points -------------------
     if not params.AllPoints:
         #We filter the points. They are still in the order we read it from the original file
         #We save only the ones seen by 3 or more cameras
@@ -255,7 +247,7 @@ def readColmapSceneInfo(path, images, eval, params, llffhold=8):
         pcd = BasicPointCloud(points=filtered_points, colors=filtered_colors, normals=filtered_normals)
 
 
-    # -------------------- En of our code -----------------
+    # -------------------- End of our code 2 -----------------
 
     scene_info = SceneInfo(point_cloud=pcd,
                            train_cameras=train_cam_infos,

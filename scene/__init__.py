@@ -84,7 +84,6 @@ class Scene:
                                                            "iteration_" + str(self.loaded_iter),
                                                            "point_cloud.ply"))
         else:
-            print("I was triggered")
             #This saves pcd to pyTorch
             self.gaussians.create_from_pcd(scene_info.point_cloud, self.cameras_extent)
 

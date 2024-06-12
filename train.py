@@ -30,7 +30,6 @@ except ImportError:
 
 
 from custom_classes import *
-#from scene.cameras import MiniCam
 
 
 def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
@@ -106,8 +105,8 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
         #Two posible trainings. Both do not occur in the same run of the program
         if subsetParams.UseDepths:
             # Pick a random Camera or create a new one
-            create_new = True if randint(0, 100) < 10 else False
-
+            #create_new = True if randint(0, 100) < 10 else False
+            create_new = True if iteration % 10 == 0 else False
             if create_new:
                 #Create new camera
                 viewpoint_cam = GetNewCamera()
@@ -131,13 +130,14 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
 
             # Loss. Depends on camera used
             if create_new:
-                loss = 10 *  TVL(depths)
+                loss = subsetParams.L_TVL * TVL(depths)
                 Ll1 = 0
                 
             else:
                 gt_image = viewpoint_cam.original_image.cuda()
                 Ll1 = l1_loss(image, gt_image)
-                loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image)) +  10 * TVL(depths)
+                loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image)) + subsetParams.L_TVL * TVL(depths)
+                #loss = TVL(depths)
                 if iteration == opt.iterations:
                     print(f"TVL = {TVL(depths)}, L1 = {Ll1}, ssim = {ssim(image, gt_image)}")
         else:
@@ -282,6 +282,7 @@ if __name__ == "__main__":
     parser.add_argument("--start_checkpoint", type=str, default = None)
     parser.add_argument("--cameras", nargs="+", type=int, default=None)
     parser.add_argument("--depths", type=str, default='true', choices=['true', 'false'])
+    parser.add_argument("--TVL", type=float, default=1.0)
     args = parser.parse_args(sys.argv[1:])
     args.save_iterations.append(args.iterations)
     
@@ -294,7 +295,7 @@ if __name__ == "__main__":
 
     myParams.TrainIndices = args.cameras
     myParams.UseDepths = args.depths.lower() == "true"
-
+    myParams.L_TVL = args.TVL
 
     print("Optimizing " + args.model_path)
 

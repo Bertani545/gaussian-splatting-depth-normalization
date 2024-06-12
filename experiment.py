@@ -12,6 +12,7 @@ from tqdm import tqdm
 from random import sample
 
 if __name__ == "__main__":
+	#subprocess.run("rm -r results", shell = True)
 	with open('sources.txt', 'r') as file:
 	    # Read lines from the file
 	    sources = file.readlines()
@@ -25,8 +26,8 @@ if __name__ == "__main__":
 		parts = path.split(os.path.sep)
 		name = parts[-1]
 
-		for n_cam in [5]:
-			for i in range(1):
+		for n_cam in [8,10]: #[3, 4, 5, 8, 10]:
+			for i in range(5):
 				#Get random cameras
 				imgs = range(len(os.listdir(os.path.join(path, "images"))))
 				cams_ids = sample(imgs, n_cam)
@@ -35,7 +36,7 @@ if __name__ == "__main__":
 
 				#Train model with depth normalization
 				output_path = './results/' + name  + "/" + str(n_cam) + "_cams/depth/" + str(i)
-				command = "python3 train.py -s {} -m {} --sh_degree 1 --opacity_reset_interval 100000000 --iterations 30000 --save_iterations 30000 --cameras {} --depths true".format(path, output_path, cameras)
+				command = "python3 train.py -s {} -m {} --sh_degree 1 --opacity_reset_interval 100000000 --iterations 30000 --save_iterations 30000 --cameras {} --depths true --TVL 0.1".format(path, output_path, cameras)
 				subprocess.run(command, shell=True)
 				#Gets metrics
 				command = "python3 render.py -m " + output_path
@@ -43,7 +44,6 @@ if __name__ == "__main__":
 				command = "python3 metrics.py -m " + output_path
 				subprocess.run(command, shell=True)
 
-				
 				#Train model with no depth normalization
 				output_path = './results/' + name  + "/" + str(n_cam) + "_cams/no_depth/" + str(i)
 				command = "python3 train.py -s {} -m {} --sh_degree 1 --opacity_reset_interval 100000000 --iterations 30000 --save_iterations 30000 --cameras {} --depths false".format(path, output_path, cameras)

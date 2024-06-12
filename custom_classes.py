@@ -1,12 +1,10 @@
 import os
 from random import randint, sample
-#from scene import Scene
 import numpy as np
 from utils.graphics_utils import getWorld2View2, getProjectionMatrix
 import torch
 from torch import nn
 
-#from scene.dataset_readers import SceneInfo
 from utils.graphics_utils import BasicPointCloud
 
 
@@ -35,14 +33,6 @@ def rodrigues_Matrix(axis, c, s):
 
     return mat
 
-"""
-Camera(colmap_id=cam_info.uid, R=cam_info.R, T=cam_info.T, 
-                  FoVx=cam_info.FovX, FoVy=cam_info.FovY, 
-                  image=gt_image, gt_alpha_mask=loaded_mask,
-                  image_name=cam_info.image_name, uid=id, data_device=args.data_device,
-                  points3D_ids=cam_info.point3D_ids)
-"""
-
 
 class NewCameras():
     def __init__(self, scene, res = 1.0):
@@ -53,7 +43,7 @@ class NewCameras():
         self.distances = np.linalg.norm(positions_reshaped - positions, axis=2)
         self.sorted_indices = np.argsort(self.distances, axis=1)
 
-        self.cameras = scene.train_cameras[res]  #Hopefully is the reference :b
+        self.cameras = scene.train_cameras[res]  #Hopefully is the reference
 
 
     def __call__(self):
@@ -66,7 +56,7 @@ class NewCameras():
         #Transform new camera position and rotation
         radius = np.linalg.norm(self.pointsCenter - self.cameras[camera_id].T)
 
-        random_direction = np.random.normal(size=3)
+        random_direction = np.random.uniform(low=-1, high=1, size=3)
         random_direction = random_direction / np.linalg.norm(random_direction)
 
         new_camera.T = self.cameras[camera_id].T + random_direction * self.distances[cameras_idx[0], cameras_idx[1]] / 1.5
@@ -102,45 +92,15 @@ class MiniCam_FromCam:
         self.projection_matrix = getProjectionMatrix(znear=self.znear, zfar=self.zfar, fovX=self.FoVx, fovY=self.FoVy).transpose(0,1).cuda()
         self.full_proj_transform = (self.world_view_transform.unsqueeze(0).bmm(self.projection_matrix.unsqueeze(0))).squeeze(0)
         self.camera_center = self.world_view_transform.inverse()[3, :3]
-   
 
     def recalculate(self):
         self.world_view_transform = torch.tensor(getWorld2View2(self.R, self.T, self.trans, self.scale)).transpose(0, 1).cuda()
         self.projection_matrix = getProjectionMatrix(znear=self.znear, zfar=self.zfar, fovX=self.FoVx, fovY=self.FoVy).transpose(0,1).cuda()
         self.full_proj_transform = (self.world_view_transform.unsqueeze(0).bmm(self.projection_matrix.unsqueeze(0))).squeeze(0)
         self.camera_center = self.world_view_transform.inverse()[3, :3]
-    """
-    def __init__(self, cam, rot_offset=np.radians(0.1), trans_offset=np.array([0.01, 0.02, 0.03]), trans=np.array([0.0, 0.0, 0.0]), scale=1.0):
-        self.image_width = cam.image_width
-        self.image_height = cam.image_height    
-        self.FoVy = cam.FoVy
-        self.FoVx = cam.FoVx
-        self.znear = cam.znear
-        self.zfar = cam.zfar
-
-        # Apply small rotation offset
-        R_offset = np.eye(3)  # Identity matrix for no initial rotation offset
-        if rot_offset > 0:
-            # Choose an axis for rotation (e.g., x-axis)
-            axis = np.random.rand(3)
-            axis = axis / np.linalg.norm(axis)
-            R_offset = rodrigues_Matrix(axis, rot_offset)
-
-            # Apply small translation offset
-            T_offset = trans_offset
-
-        # Combine original and offset values
-        R = cam.R @ R_offset
-        T = cam.T + T_offset
-
-        self.world_view_transform = torch.tensor(getWorld2View2(R, T, trans, scale)).transpose(0, 1).cuda()
-        self.projection_matrix = getProjectionMatrix(znear=self.znear, zfar=self.zfar, fovX=self.FoVx, fovY=self.FoVy).transpose(0,1).cuda()
-        self.full_proj_transform = (self.world_view_transform.unsqueeze(0).bmm(self.projection_matrix.unsqueeze(0))).squeeze(0)
-        self.camera_center = self.world_view_transform.inverse()[3, :3]
-        """
 
 class MyParams():
-    def __init__(self, sceneIndices = None, n_cameras = -1, test = False, trainIndices = None, percentage = 1.0, allPoints = False, useDepths = True):
+    def __init__(self, sceneIndices = None, n_cameras = -1, test = False, trainIndices = None, percentage = 1.0, allPoints = False, useDepths = True, lbd = 1.0):
         self.SceneIndices = sceneIndices.sort() if sceneIndices else None
         self.N_cameras = n_cameras
 
@@ -149,6 +109,7 @@ class MyParams():
         self.AllPoints = allPoints
 
         self.UseDepths = useDepths
+        self.L_TVL = lbd
 
         #Modified when starting an scene
         self.TrainIndices = trainIndices.sort() if trainIndices else None # Relative to the SceneIndices
@@ -156,7 +117,6 @@ class MyParams():
 
 class cameras_Subset :
 
-    #def __init__(self, scene : Scene = None, params : MyParams = None):
     def __init__(self):
         self.AllCameras = []
         self.SceneIndices = []
@@ -164,52 +124,6 @@ class cameras_Subset :
         self.TrainIndices = []
         self.TestSubset = []
         self.TrainSubset = []
-
-
-        '''
-        ## ----- To be deleted -------
-        if scene and params:
-            self.AllCameras = scene.getTrainCameras().copy()
-        
-
-            if params.SceneIndices :
-                self.SceneIndices = params.SceneIndices
-            elif params.N_cameras  > 0:
-                self.SceneIndices = [randint(0, len(self.AllCameras)) for _ in range(min(len(self.AllCameras)-1, params.N_cameras))]
-            else:
-                self.SceneIndices = [_ for _ in range(len(self.AllCameras))]
-        
-            self.CameraSubset = []
-            for idx in self.SceneIndices:
-                self.CameraSubset.append(self.AllCameras[idx])
-
-            print(f"Number of cameras: {len(self.CameraSubset)}")
-            print(f"Working with cameras {self.SceneIndices}")
-
-
-        #Construct the train and test sets
-       
-            if params.MakeTest:
-                if params.TrainIndices:
-                    for idx in params.TrainIndices:
-                        self.TrainSubset.append(self.CameraSubset[idx])
-                        self.TrainIndices.append(params.SceneIndices[idx])
-
-                else:
-                    trainSamples = int(len(self.CameraSubset) * params.Percentage)
-
-
-                    self.TrainIndices = sample(params.SceneIndices, trainSamples)
-                    for idx in self.TrainIndices:
-                        self.TrainSubset.append(self.AllCameras[idx])
-
-                self.TestSubset = [_ for _ in self.CameraSubset if _ not in self.TrainSubset]
-                self.TestIndices = [_ for _ in params.SceneIndices if _ not in self.TrainIndices]
-
-            else:
-                self.TrainSubset = self.CameraSubset.copy()
-                self.TrainIndices = params.SceneIndices.copy()
-        '''
 
     def getSubset(self):
         return self.CameraSubset
