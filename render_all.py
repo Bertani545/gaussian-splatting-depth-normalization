@@ -48,7 +48,7 @@ dataset = model.extract(args)
 gaussians = GaussianModel(dataset.sh_degree)
 
 
-#Background se crea como un tensor de 1x3 ????
+#Background se crea como un tensor de 1x3
 bg_color = [1,1,1] if dataset.white_background else [0, 0, 0]
 background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
 

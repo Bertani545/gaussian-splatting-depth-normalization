@@ -11,3 +11,4 @@ results*/
 dataset/
 nohup.out
 possible_changes.txt
+render_all.py
