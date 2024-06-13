@@ -26,7 +26,7 @@ if __name__ == "__main__":
 		parts = path.split(os.path.sep)
 		name = parts[-1]
 
-		for n_cam in [8,10]: #[3, 4, 5, 8, 10]:
+		for n_cam in [3, 4, 5, 8, 10]:
 			for i in range(5):
 				#Get random cameras
 				imgs = range(len(os.listdir(os.path.join(path, "images"))))

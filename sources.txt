@@ -1,4 +1,4 @@
+./dataset/data2_trexsanta
 ./dataset/data2_fernvlsb
 ./dataset/data2_hugetrike
-./dataset/data2_trexsanta
 ./dataset/data5_lotr
