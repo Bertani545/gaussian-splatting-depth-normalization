@@ -1,20 +1,34 @@
-# How to use the renderer
-In the state it currently is, it can render a camera that was used to train the model. To do this, we have to define in **render.py**  at lines  36 and 37 the paths where the final model and the training data are located. Later, in line 58, the variable **views** contains all the cameras' parameters used in the training process. By specifying a certain camera number between brackets we can render different images.
+# How to use the program
 
-Once done, to render the images we need to initiate a cuda enviroment. In the root directory run in a terminal
+We need to initiate a cuda enviroment. In the root directory run in a terminal
 ```shell
 conda env create --file environment.yml
 conda activate gaussian_splatting
 ```
-and then run **render.py**
 
-As it is now, the renderer will generate two images that reflects the depth of the scene. This will be changed so it generates a picture with depths and another one with the colors of the scene.
+Once that done, we wirte the route to all the models we want to test in *sources.txt*. The main program that runs the experiment is **experiment.py**. Inside it you can find commands that will be run in the terminal. If you wish to change the value of $\lambda_{TV}$ you would have to change the value next to --TVL in the first command. To run it just use
 
-## Special Note
-In order to use only the renderer in this state, the line 98 of ./arguments/\_\_init\_\_.py was changed to find the cfg gile at "./Modelo/cfg_args" so it's spected that such directory exists in the root directory. If a different directory is used, this line must be changed.
+```shell
+python experiment.py
+```
 
+At 30000 iterations, each scene takes around 8 hours to complete. You can also change the iterations in the command if desired.
 
-# How the rasterizer works
+Once the experiment is done, the output will be stored in a folder named *results*. To get the $\LaTeX$ tables to report the results as in the report, simply run
+```shell
+python get_results.py
+```
+and the tables will be ready to copy and paste in the terminal.
+
+Finally, if you want to render the depth of certain obtained model and camera you can use *render\_single\_image.py*. To use it run:
+```shell
+python render_single_image.py -m path_to_3DGS_output --camera camera_number
+```
+A 3DGS output is the folder that contains a file named *cfg_args*. In our experiment, the path to the outputs is *results/scene_name/n_cameras/{depth/no_depth}/{0-5}.
+
+(The experiment for lambda is also included but is just a modification of the main file)
+
+# How the rasterizer works if you ever need to modify it (Bakcward pass not included)
 
 As you can see, in render.py the function **render** is called at line 58. This function is defined in **./gaussian_renderer/\_\_init\_\_.py** at line 18. There, after setting up the variables, the function creates a **GaussianRasterizer** called *rasterizer* and calls it with such variables. This call returns a Tuple with the rendered image, depths and radii.
 
