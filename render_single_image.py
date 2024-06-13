@@ -1,3 +1,4 @@
+#usage: python render_single_image.py -m modelOuputPath -camera cameraNumber(ID)
 import os
 import sys
 from argparse import ArgumentParser
