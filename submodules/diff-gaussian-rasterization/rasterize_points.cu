@@ -116,9 +116,9 @@ RasterizeGaussiansCUDA(
   }
 
   //Normalize depths
-  /*torch::Tensor min_val = out_depths.min();
+  torch::Tensor min_val = out_depths.min();
   torch::Tensor max_val = out_depths.max();
-  out_depths = (out_depths - min_val) / (max_val - min_val);*/
+  out_depths = (out_depths - min_val) / (max_val - min_val);
 
 
   return std::make_tuple(rendered, out_color, out_depths, radii, geomBuffer, binningBuffer, imgBuffer);
@@ -191,6 +191,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Te
 	  reinterpret_cast<char*>(binningBuffer.contiguous().data_ptr()),
 	  reinterpret_cast<char*>(imageBuffer.contiguous().data_ptr()),
 	  dL_dout_color.contiguous().data_ptr<float>(),
+	  dL_dout_depth.contiguous().data_ptr<float>(),
 	  dL_dmeans2D.contiguous().data_ptr<float>(),
 	  dL_dconic.contiguous().data_ptr<float>(),  
 	  dL_dopacity.contiguous().data_ptr<float>(),

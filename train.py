@@ -131,19 +131,20 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
             # Loss. Depends on camera used
             if create_new:
                 lbd_tvl = subsetParams.L_TVL
-                loss = lbd_tvl * TVL(None, depths)
+                tvl_loss = lbd_tvl * TVL(None, depths)
                 Ll1 = 0
+                total_loss = tvl_loss
                 
             else:
                 gt_image = viewpoint_cam.original_image.cuda()
-                Ll1 = l1_loss(gt_image, depths)
+                Ll1 = l1_loss(image, gt_image)
                 loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
 
                 # Regularization
-                lbd_tvl = subsetParams.L_TVL if iteration > 3000 else 0.0
-                tvl_loss = lbd_tvl * TVL(gt_image, depths)
+                lbd_tvl = subsetParams.L_TVL #if iteration > 3000 else 0.0
+                tvl_loss = lbd_tvl * TVL(gt_image, depths) if iteration > 3000 else 0.0
 
-                loss  = loss + tvl_loss
+                total_loss = loss + tvl_loss
                 #loss = TVL(depths)
                 #if iteration == opt.iterations:
                 #    print(f"TVL = {TVL(depths)}, L1 = {Ll1}, ssim = {ssim(image, gt_image)}")
@@ -165,11 +166,10 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
             
             gt_image = viewpoint_cam.original_image.cuda()
             Ll1 = l1_loss(image, gt_image)
-            loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
+            total_loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
         
 
-
-        loss.backward() #starts the back propagation
+        total_loss.backward() #starts the back propagation
 
 
 
@@ -180,7 +180,8 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
             # Progress bar
             ema_loss_for_log = 0.4 * loss.item() + 0.6 * ema_loss_for_log
             if iteration % 10 == 0:
-                progress_bar.set_postfix({"Loss": f"{ema_loss_for_log:.{7}f}"})
+                progress_bar.set_postfix({"Loss": f"{ema_loss_for_log:.{7}f}",
+                                          "Points": f"{len(gaussians.get_xyz)}"})
                 progress_bar.update(10)
             if iteration == opt.iterations:
                 progress_bar.close()
@@ -307,7 +308,7 @@ if __name__ == "__main__":
     print("Optimizing " + args.model_path)
 
     # Initialize system state (RNG) to always the same
-    safe_state(args.quiet)
+    #safe_state(args.quiet)
 
     # Start GUI server, configure and run training
     network_gui.init(args.ip, args.port)

@@ -454,11 +454,11 @@ renderCUDA(
 	float accum_rec[C] = { 0 };
 	float dL_dpixel[C];
 	float dL_ddepth;
-	if (inside)
+	if (inside){
 		for (int i = 0; i < C; i++)
 			dL_dpixel[i] = dL_dpixels[i * H * W + pix_id];
 		dL_ddepth = dL_ddepths[pix_id];
-
+	}
 	// for compute gradient with respect to depth
 	float last_depth = 0;
 	float accum_depth_rec = 0;
@@ -540,7 +540,7 @@ renderCUDA(
 
 			// Propagate gradients w.r.t ray-splat depths
 			accum_depth_rec = last_alpha * last_depth + (1.f - last_alpha) * accum_depth_rec;
-			last_depth = (transformPoint4x3(means3D[j], viewmatrix)).z;
+			last_depth = (transformPoint4x3(collected_means3D[j], viewmatrix)).z;
 			dL_dalpha += (last_depth - accum_depth_rec) * dL_ddepth;
 
 
