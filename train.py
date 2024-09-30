@@ -106,7 +106,7 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
         if subsetParams.UseDepths:
             # Pick a random Camera or create a new one
             #create_new = True if randint(0, 100) < 10 else False
-            create_new = True if iteration % 10 == 0 else False
+            create_new = True if iteration % 250 == 0 and iteration > 3000 else False
             if create_new:
                 #Create new camera
                 viewpoint_cam = GetNewCamera()
@@ -130,16 +130,23 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
 
             # Loss. Depends on camera used
             if create_new:
-                loss = subsetParams.L_TVL * TVL(depths)
+                lbd_tvl = subsetParams.L_TVL if iteration > 3000 else 0.0
+                loss = lbd_tvl * TVL(None, depths)
                 Ll1 = 0
                 
             else:
                 gt_image = viewpoint_cam.original_image.cuda()
                 Ll1 = l1_loss(image, gt_image)
-                loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image)) + subsetParams.L_TVL * TVL(depths)
+                loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
+
+                # Regularization
+                lbd_tvl = subsetParams.L_TVL if iteration > 3000 else 0.0
+                tvl_loss = lbd_tvl * TVL(gt_image, depths)
+
+                loss  = loss + tvl_loss
                 #loss = TVL(depths)
-                if iteration == opt.iterations:
-                    print(f"TVL = {TVL(depths)}, L1 = {Ll1}, ssim = {ssim(image, gt_image)}")
+                #if iteration == opt.iterations:
+                #    print(f"TVL = {TVL(depths)}, L1 = {Ll1}, ssim = {ssim(image, gt_image)}")
         else:
 
             if not viewpoint_stack:

@@ -63,16 +63,18 @@ def _ssim(img1, img2, window, window_size, channel, size_average=True):
         return ssim_map.mean(1).mean(1).mean(1)
 
 
-def TVL(img):
+def TVL(img, depths):
 
-    channels, height, width = img.size()
+    channels, height, width = depths.size()
    
     assert channels == 1, "Input image must be gray scale"
 
-    
+    #min_val = depths.min()
+    #max_val = depths.max()
+    #depths = (depths - min_val) / (max_val - min_val)
 
-    tv_h = (img[:,1:,:] - img[:,:-1,:]).abs().sum()
-    tv_w = (img[:,:,1:] - img[:,:,:-1]).abs().sum()
+    tv_h = (depths[:,1:,:] - depths[:,:-1,:]).abs().sum()
+    tv_w = (depths[:,:,1:] - depths[:,:,:-1]).abs().sum()
 
     return (tv_h + tv_w)/(height * width)
 
