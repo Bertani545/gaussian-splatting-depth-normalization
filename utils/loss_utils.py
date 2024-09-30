@@ -67,14 +67,25 @@ def TVL(img, depths):
 
     channels, height, width = depths.size()
    
-    assert channels == 1, "Input image must be gray scale"
+    #assert channels == 1, "Input image must be gray scale"
 
     #min_val = depths.min()
     #max_val = depths.max()
     #depths = (depths - min_val) / (max_val - min_val)
 
-    tv_h = (depths[:,1:,:] - depths[:,:-1,:]).abs().sum()
-    tv_w = (depths[:,:,1:] - depths[:,:,:-1]).abs().sum()
+    if img is not None:
+        gray_img = 0.299 * img[0, :, :] + 0.587 * img[1, :, :] + 0.114 * img[2, :, :]
+        img_np = gray_img.detach().cpu().numpy();
+        img_np = np.squeeze(img_np)
+        img_np = (img_np * 255).astype(np.uint8)
+        edges = cv.Canny(img_np, 10, 50)
+        mask = 1.0 - (torch.tensor(edges, dtype = torch.float32)/ 255.0)
+        mask = mask.cuda().unsqueeze(0)
+    else:
+        mask = torch.ones_like(depths)
+    # assert channels == 1, "Input image must be gray scale"
+    tv_h = ((depths[:,1:,:] - depths[:,:-1,:]).abs()*mask[:,1:,:]).sum()
+    tv_w = ((depths[:,:,1:] - depths[:,:,:-1]).abs()*mask[:,:,1:]).sum()
 
     return (tv_h + tv_w)/(height * width)
 

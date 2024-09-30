@@ -130,13 +130,13 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
 
             # Loss. Depends on camera used
             if create_new:
-                lbd_tvl = subsetParams.L_TVL if iteration > 3000 else 0.0
+                lbd_tvl = subsetParams.L_TVL
                 loss = lbd_tvl * TVL(None, depths)
                 Ll1 = 0
                 
             else:
                 gt_image = viewpoint_cam.original_image.cuda()
-                Ll1 = l1_loss(image, gt_image)
+                Ll1 = l1_loss(gt_image, depths)
                 loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
 
                 # Regularization

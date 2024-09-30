@@ -411,7 +411,7 @@ renderCUDA(
 	const float* __restrict__ dL_dpixels,
 	const float* __restrict__ dL_ddepths,
 	const float3* __restrict__ means3D,
-	const float* view_matrix,
+	const float* viewmatrix,
 	float3* __restrict__ dL_dmean2D,
 	float4* __restrict__ dL_dconic2D,
 	float* __restrict__ dL_dopacity,
@@ -439,7 +439,7 @@ renderCUDA(
 	__shared__ float4 collected_conic_opacity[BLOCK_SIZE];
 	__shared__ float collected_colors[C * BLOCK_SIZE];
 
-	__shared__ float4 collected_means3D[BLOCK_SIZE];
+	__shared__ float3 collected_means3D[BLOCK_SIZE];
 
 	// In the forward, we stored the final value for T, the
 	// product of all (1 - alpha) factors. 
@@ -457,7 +457,7 @@ renderCUDA(
 	if (inside)
 		for (int i = 0; i < C; i++)
 			dL_dpixel[i] = dL_dpixels[i * H * W + pix_id];
-		dL_ddepth = dL_ddepths[i * H * W + pix_id];
+		dL_ddepth = dL_ddepths[pix_id];
 
 	// for compute gradient with respect to depth
 	float last_depth = 0;
@@ -487,7 +487,7 @@ renderCUDA(
 			for (int i = 0; i < C; i++)
 				collected_colors[i * BLOCK_SIZE + block.thread_rank()] = colors[coll_id * C + i];
 
-			collected_means3D[block.thread_rank()] = normal_opacity[coll_id];
+			collected_means3D[block.thread_rank()] = means3D[coll_id];
 		}
 		block.sync();
 
@@ -671,7 +671,6 @@ void BACKWARD::render(
 		means2D,
 		conic_opacity,
 		colors,
-		depths,
 		final_Ts,
 		n_contrib,
 		dL_dpixels,
