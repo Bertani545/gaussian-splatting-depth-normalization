@@ -115,12 +115,6 @@ RasterizeGaussiansCUDA(
 		debug);
   }
 
-  //Normalize depths
-  torch::Tensor min_val = out_depths.min();
-  torch::Tensor max_val = out_depths.max();
-  out_depths = (out_depths - min_val) / (max_val - min_val);
-
-
   return std::make_tuple(rendered, out_color, out_depths, radii, geomBuffer, binningBuffer, imgBuffer);
 }
 

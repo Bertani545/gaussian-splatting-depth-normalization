@@ -70,7 +70,7 @@ def TVL(img, depths):
 
     channels, height, width = depths.size()
    
-    #assert channels == 1, "Input image must be gray scale"
+    assert height > 0 and width > 0, "Depth image must exists"
 
     #min_val = depths.min()
     #max_val = depths.max()
