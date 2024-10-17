@@ -93,6 +93,76 @@ def TVL(img, depths):
     return (tv_h + tv_w)/(height * width)
 
 
+class DepthDifferenceMean(nn.Module):
+    def __init__(self):
+        super(DepthDifferenceMean, self).__init__()
+
+        # Define the kernels to calculate differences with the neighbors
+        kernels = torch.tensor([
+            [[[-1,  0,  0], 
+              [ 0,  1,  0], 
+              [ 0,  0,  0]]],  # Top-left (-1, -1)
+
+            [[[-1,  0,  0], 
+              [ 0,  1,  0], 
+              [ 0,  0,  0]]],  # Top (-1, 0)
+
+            [[[-1,  0,  0], 
+              [ 0,  1,  0], 
+              [ 0,  0,  0]]],  # Top-right (-1, +1)
+
+            [[ [0, -1,  0], 
+              [ 0,  1,  0], 
+              [ 0,  0,  0]]],  # Left (0, -1)
+
+            [[ [0,  0, -1], 
+              [ 0,  1,  0], 
+              [ 0,  0,  0]]],  # Right (0, +1)
+
+            [[ [0,  0,  0], 
+              [ 0,  1,  0], 
+              [-1,  0,  0]]],  # Bottom-left (+1, -1)
+
+            [[ [0,  0,  0], 
+              [ 0,  1,  0], 
+              [ 0, -1,  0]]],  # Bottom (0, +1)
+
+            [[ [0,  0,  0], 
+              [ 0,  1,  0], 
+              [ 0,  0, -1]]]   # Bottom-right (+1, +1)
+        ], dtype=torch.float32)
+
+        self.get_differences = nn.Conv2d(1, 8, (3,3), padding=0, bias=False)  # No padding to avoid boundary issues
+        self.get_differences.weight = nn.Parameter(kernels)
+
+    def forward(self, img, depth):
+        _, _, height, width = img.size()
+
+        if img is not None:
+            gray_img = 0.299 * img[0, :, :] + 0.587 * img[1, :, :] + 0.114 * img[2, :, :]
+            img_np = gray_img.detach().cpu().numpy();
+            img_np = np.squeeze(img_np)
+            img_np = (img_np * 255).astype(np.uint8)
+            edges = cv.Canny(img_np, 10, 50)
+            mask = 1.0 - (torch.tensor(edges, dtype = torch.float32)/ 255.0)
+            mask = mask.cuda().unsqueeze(0)
+        else:
+            mask = torch.ones_like(depths[:, :, 1:-1, 1:-1])
+
+        # Exclude boundary pixels from convolution
+        depth_cropped = depth[:, :, 1:-1, 1:-1]
+
+        differences = self.get_differences(depth_cropped)
+        differences = differences ** 2 * mask
+        total_sum = torch.sqrt(torch.sum(differences, dim=1)).sum()
+
+        return total_sum / mask.sum() #((height - 2) * (width - 2))
+
+
+
+
+
+
 
 def depth_distance(img):
     window_size = 3  # Adjust as needed

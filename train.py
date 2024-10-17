@@ -12,7 +12,7 @@
 import os
 import torch
 from random import randint
-from utils.loss_utils import l1_loss, ssim, TVL
+from utils.loss_utils import l1_loss, ssim, TVL, DepthDifferenceMean
 from gaussian_renderer import render, network_gui
 import sys
 from scene import Scene, GaussianModel
@@ -61,9 +61,11 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
 
 
     #Data for camera creation
-    with torch.no_grad():
-        GetNewCamera = NewCameras(scene)
+    #with torch.no_grad():
+    GetNewCamera = NewCameras(scene)
 
+    # For depth loss
+    get_depth_difference_mean = DepthDifferenceMean()
     
 
     viewpoint_stack = None
@@ -131,7 +133,7 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
             # Loss. Depends on camera used
             if create_new:
                 lbd_tvl = subsetParams.L_TVL
-                tvl_loss = lbd_tvl * TVL(None, depths)
+                tvl_loss = lbd_tvl * get_depth_difference_mean(None, depths)#TVL(None, depths)
                 Ll1 = 0
                 total_loss = tvl_loss
                 
@@ -142,7 +144,7 @@ def training(dataset, opt, pipe, subsetParams, testing_iterations, saving_iterat
 
                 # Regularization
                 lbd_tvl = subsetParams.L_TVL #if iteration > 3000 else 0.0
-                tvl_loss = lbd_tvl * TVL(gt_image, depths) if iteration > 3000 else 0.0
+                tvl_loss = lbd_tvl * get_depth_difference_mean(gt_image, depths) if iteration > 3000 else 0.0#TVL(gt_image, depths) 
 
                 total_loss = loss + tvl_loss
                 #loss = TVL(depths)
