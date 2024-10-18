@@ -95,12 +95,12 @@ class _RasterizeGaussians(torch.autograd.Function):
         ctx.num_rendered = num_rendered
 
         #Normalize depths
-        '''
+        
         max_depth = depths.max() 
         min_depth = depths.min()
         depths = (depths - min_depth) / (max_depth - min_depth)
         ctx.relevant_depths = (min_depth, max_depth)
-        '''
+        
 
         ctx.save_for_backward(colors_precomp, means3D, scales, rotations, cov3Ds_precomp, radii, sh, geomBuffer, binningBuffer, imgBuffer)
         return color, radii,  depths
@@ -111,10 +111,10 @@ class _RasterizeGaussians(torch.autograd.Function):
         # Restore necessary values from context
         num_rendered = ctx.num_rendered
         raster_settings = ctx.raster_settings
-        #min_depth, max_depth = ctx.relevant_depths
+        min_depth, max_depth = ctx.relevant_depths
         colors_precomp, means3D, scales, rotations, cov3Ds_precomp, radii, sh, geomBuffer, binningBuffer, imgBuffer = ctx.saved_tensors
 
-        #grad_depth = grad_depth * (max_depth - min_depth)
+        grad_depth = grad_depth * (max_depth - min_depth)
 
 
         # Restructure args as C++ method expects them

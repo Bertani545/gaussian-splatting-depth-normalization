@@ -36,7 +36,7 @@ def rodrigues_Matrix(axis, c, s):
 
 class NewCameras():
     def __init__(self, scene, res = 1.0):
-        self.pointsCenter = torch.mean(scene.gaussians._xyz, dim=0).cpu().numpy()
+        self.pointsCenter = torch.mean(scene.gaussians._xyz, dim=0).detach().cpu().numpy()
 
         positions = np.array([camera.T for camera in scene.train_cameras[res]])
         positions_reshaped = positions.reshape(-1, 1, 3)

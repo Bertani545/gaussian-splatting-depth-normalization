@@ -11,6 +11,7 @@
 
 import torch
 import torch.nn.functional as F
+import torch.nn as nn
 from torch.autograd import Variable
 from math import exp
 
@@ -130,13 +131,13 @@ class DepthDifferenceMean(nn.Module):
             [[ [0,  0,  0], 
               [ 0,  1,  0], 
               [ 0,  0, -1]]]   # Bottom-right (+1, +1)
-        ], dtype=torch.float32)
+        ], dtype=torch.float32, device="cuda")
 
         self.get_differences = nn.Conv2d(1, 8, (3,3), padding=0, bias=False)  # No padding to avoid boundary issues
         self.get_differences.weight = nn.Parameter(kernels)
 
-    def forward(self, img, depth):
-        _, _, height, width = img.size()
+    def forward(self, img, depths):
+        _, height, width = depths.size()
 
         if img is not None:
             gray_img = 0.299 * img[0, :, :] + 0.587 * img[1, :, :] + 0.114 * img[2, :, :]
@@ -147,13 +148,13 @@ class DepthDifferenceMean(nn.Module):
             mask = 1.0 - (torch.tensor(edges, dtype = torch.float32)/ 255.0)
             mask = mask.cuda().unsqueeze(0)
         else:
-            mask = torch.ones_like(depths[:, :, 1:-1, 1:-1])
+            mask = torch.ones_like(depths)
 
         # Exclude boundary pixels from convolution
-        depth_cropped = depth[:, :, 1:-1, 1:-1]
+        #depths_cropped = depths
 
-        differences = self.get_differences(depth_cropped)
-        differences = differences ** 2 * mask
+        differences = self.get_differences(depths)
+        differences = differences ** 2 * mask[:, 1:-1, 1:-1]
         total_sum = torch.sqrt(torch.sum(differences, dim=1)).sum()
 
         return total_sum / mask.sum() #((height - 2) * (width - 2))
